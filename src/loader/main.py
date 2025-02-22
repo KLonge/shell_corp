@@ -1,103 +1,75 @@
-import dlt
 import os
-import soccerdata as sd
-from typing import Sequence
+from typing import Any
 
-def fetch_premier_league_data(season: str) -> Sequence[dict]:
+import dlt
+import polars as pl
+import soccerdata as sd  # type: ignore
+
+from src.loader.utils import (
+    flatten_fbref_pd_dataframe,
+    print_debug_info,
+    transform_player_data,
+)
+
+
+def fetch_premier_league_data(season: str) -> list[dict[str, Any]]:
     """Fetch Premier League player data from FBref.
-    
+
     Args:
         season: The season to fetch data for, e.g. "2024" for 2024/25 season
-        
+
     Returns:
         List of player dictionaries containing stats and info
     """
     try:
         # Initialize FBref scraper and get data
-        fbref = sd.FBref(leagues="ENG-Premier League", seasons=season)
-        stats = fbref.read_player_season_stats()
-        
-        # Reset index and select/rename columns
-        players_df = stats.reset_index()[['player', 'team', 'pos', 'age']].copy()
-        players_df.columns = ['player_name', 'current_club', 'position', 'age']
-        
-        # Clean age data - extract just the years
-        players_df['age'] = players_df['age'].str.split('-').str[0]
-        
-        # Add constant columns
-        players_df['id'] = None
-        players_df['market_value_euro'] = None
-        players_df['contract_end_date'] = None
-        players_df['transfer_status'] = 'available'
-        
-        # Convert to list of dicts with proper types
-        return players_df.astype({
-            'player_name': str,
-            'current_club': str,
-            'position': str,
-            'age': 'Int64'  # handles NaN values better than int
-        }).to_dict('records')
-        
+        fbref: sd.FBref = sd.FBref(leagues="ENG-Premier League", seasons=season)
+        raw_stats = fbref.read_player_season_stats()
+
+        # Flatten the complex pandas DataFrame structure
+        flat_df = flatten_fbref_pd_dataframe(df=raw_stats)
+
+        # Convert to polars and transform
+        pl_df = pl.from_pandas(data=flat_df)
+        players_df = transform_player_data(df=pl_df)
+
+        # Print debug info to help with test data creation
+        print_debug_info(raw_df=raw_stats, flat_df=flat_df, final_df=players_df)
+
+        return players_df.to_dicts()
+
     except Exception as e:
         raise Exception(f"Error fetching FBref data: {e}")
+
 
 def generate_sample_data() -> list[dict]:
     """Generate football transfer listing data."""
     try:
         return fetch_premier_league_data(season="2024")
     except Exception as e:
-        print(f"Error fetching real data: {e}. Falling back to sample data...")
-        return [
-            {
-                "id": 1,
-                "player_name": "Marcus Silva",
-                "current_club": "FC Porto",
-                "position": "Forward",
-                "age": 23,
-                "market_value_euro": 15000000,
-                "contract_end_date": "2025-06-30",
-                "transfer_status": "available"
-            },
-            {
-                "id": 2,
-                "player_name": "Thomas Weber",
-                "current_club": "RB Leipzig",
-                "position": "Midfielder",
-                "age": 25,
-                "market_value_euro": 22000000,
-                "contract_end_date": "2025-12-31",
-                "transfer_status": "loan_available"
-            },
-            {
-                "id": 3,
-                "player_name": "James Wilson",
-                "current_club": "Ajax Amsterdam",
-                "position": "Defender",
-                "age": 21,
-                "market_value_euro": 8000000,
-                "contract_end_date": "2026-06-30",
-                "transfer_status": "available"
-            },
-        ]
+        print(f"Error fetching real data: {e}.")
+        raise Exception(f"Error fetching real data: {e}.")
+
 
 def main() -> None:
     """Main function to load transfer listing data into DuckDB."""
     # Ensure database directory exists
     os.makedirs("database", exist_ok=True)
-    
+
     # Create pipeline that loads to database/shell_corp.duckdb
     pipeline = dlt.pipeline(
         pipeline_name="shell_corp",
-        destination=dlt.destinations.duckdb(
-            "database/shell_corp.duckdb"
-        ),
-        dataset_name="raw"
+        destination=dlt.destinations.duckdb("database/shell_corp.duckdb"),
+        dataset_name="raw",
     )
 
     # Load the data / Run the pipeline
     data = generate_sample_data()
-    info = pipeline.run(data, table_name="transfer_listings", write_disposition="replace")
+    info = pipeline.run(
+        data, table_name="transfer_listings", write_disposition="replace"
+    )
     print(f"Load info: {info}")
 
+
 if __name__ == "__main__":
-    main() 
+    main()

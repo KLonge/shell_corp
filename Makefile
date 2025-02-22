@@ -35,27 +35,20 @@ check-uv:
 	@if [ "$(shell uname)" = "Darwin" ]; then \
 		which uv > /dev/null || (echo "Installing uv via Homebrew..." && brew install uv); \
 	else \
-		which uv > /dev/null || (\
-			echo "Installing uv..." && \
-			(powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex" && \
-			export PATH="$$PATH:$$USERPROFILE/.local/bin" && \
-			echo 'export PATH="$$PATH:$$USERPROFILE/.local/bin"' >> ~/.bashrc && \
-			source ~/.bashrc) \
-		); \
+		which uv > /dev/null || (echo "Installing uv via curl..." && curl -LsSf https://astral.sh/uv/install.sh | sh); \
 	fi
 
 init-python:
-	@if [ ! -d "$(VENV_NAME)" ]; then \
+	@if [ ! -d "$(PYTHON_VENV_NAME)" ]; then \
 		echo "Creating virtual environment with Python 3.12..."; \
-		cd $(CURDIR) && $(UV_CMD) venv --python 3.12 $(VENV_NAME); \
+		uv venv --python 3.12 $(PYTHON_VENV_NAME); \
 	fi
-	make install-python-deps
 
 install-python-deps:
-	cd $(CURDIR) && $(UV_CMD) pip install -e .
+	uv pip install -e ".[dev]"
 
 upgrade-python-deps:
-	$(UV_CMD) lock --upgrade
+	uv lock --upgrade
 	make install-python-deps
 
 # Base commands
@@ -64,67 +57,28 @@ init: check-uv init-python install-python-deps
 clean:
 	find . \( -type d -name "__pycache__" -o -type f -name "*.pyc" -o -type d -name ".pytest_cache" -o -type d -name "*.egg-info" \) -print0 | xargs -0 rm -rf
 
+# Testing commands
 test:
-	$(PYTHON_VENV_NAME)/bin/pytest --cov=shell_corp shell_corp_tests
+	$(PYTHON_CMD) -m pytest --cov=shell_corp tests/
+
+test-debug:
+	DEBUG_WAIT=1 $(PYTHON_CMD) -m pytest -vv --log-cli-level=INFO $(filter-out $@,$(MAKECMDGOALS))
 
 mypy:
-	$(PYTHON_VENV_NAME)/bin/mypy shell_corp
+	$(PYTHON_CMD) -m mypy src/ tests/
 
-# Add these new commands
+# Data pipeline commands
 dlt:
 	$(PYTHON_CMD) src/loader/main.py
 	@echo "\nVerifying data in DuckDB:"
 	@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM raw.transfer_listings').df())"
 
-show-analysis:
-	@echo "Showing transfer analysis results:"
-	@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM staging.transfer_analysis').df())"
-
 sqlmesh-plan:
-	sqlmesh -p src/sqlmesh plan
+	$(PYTHON_CMD) -m sqlmesh -p src/sqlmesh plan
 	@echo "\nShowing transfer analysis results:"
 	-@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM staging.transfer_analysis').df())"
 
 sqlmesh-restate:
-	sqlmesh -p src/sqlmesh plan --restate-model staging.transfer_analysis
-	@echo "\nShowing transfer analysis results:"
-	-@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM staging.transfer_analysis').df())"
+	$(PYTHON_CMD) -m sqlmesh -p src/sqlmesh plan --restate-model staging.transfer_analysis
 
-# Clean command to remove virtual environment
-clean-venv:
-	$(DEACTIVATE) || true
-	rm -rf $(VENV_NAME)
-	rm -rf database/*.duckdb*
-
-# Create virtual environment
-create-venv:
-	$(UV_CMD) venv $(VENV_NAME)
-	@echo "Virtual environment created. To activate, run: source .venv/Scripts/activate"
-
-# Install dependencies
-install-deps:
-	$(UV_CMD) pip install -e .
-
-# Full reinstall command
-reinstall: clean-venv create-venv install-deps
-
-# Add these new commands
-activate:
-	@echo "To activate the virtual environment, run:"
-	@echo "source .venv/Scripts/activate"
-
-deactivate:
-	@echo "To deactivate the virtual environment, run:"
-	@echo "source .venv/Scripts/deactivate"
-
-# Package inspection commands
-list-packages:
-	$(PYTHON_CMD) -m uv pip list
-
-show-tree:
-	$(PYTHON_CMD) -m uv tree
-
-check-env:
-	$(PYTHON_CMD) -m uv pip check
-
-.PHONY: test test-debug mypy dlt sqlmesh-plan clean-venv create-venv install-deps reinstall activate deactivate list-packages show-tree check-env
+.PHONY: init install-python install-python-deps upgrade-python-deps clean test test-debug mypy dlt sqlmesh-plan sqlmesh-restate clean-venv create-venv install-deps reinstall activate deactivate list-packages show-tree check-env

@@ -3,29 +3,34 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "shell_corp"
+name = "src"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "duckdb",
     "dlt[duckdb]>=1.4.1",
+    "polars",
+    "pyarrow",
     "sqlmesh>=0.38.0",
     "soccerdata>=1.0.0",
+    "pandas-stubs",
+    "types-PyYAML",
 ]
 
 [project.optional-dependencies]
 dev = [
     "mypy==1.13",
     "ruff",
-]
-
-test = [
     "pytest",
     "pytest-cov",
     "pytest-asyncio",
 ]
 
+[tool.setuptools]
+packages = ["src"]
+
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 markers = [
     "unit: mark a test as a unit test.",
     "integration: mark a test as an integration test.",
@@ -34,9 +39,10 @@ markers = [
 [tool.ruff.lint]
 ignore = ["E402", "E712"]
 select = ['I001', "E4", "E7", "E9", "F"]
+exclude = ["tests/*"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["shell_corp"]
+known-first-party = ["loader"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 combine-as-imports = true
 split-on-trailing-comma = true
@@ -44,9 +50,11 @@ split-on-trailing-comma = true
 [tool.coverage.run]
 parallel = true
 omit = [
-    "*/tests/*",
+    "tests/*",
     "*/test_*.py",
+    ".venv/*",
 ]
+source = ["src"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -62,6 +70,15 @@ warn_unused_ignores = false
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "src.*"
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
 module = ".venv.*"
