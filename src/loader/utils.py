@@ -116,10 +116,8 @@ def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
         ]
     )
 
-    # Add generated columns
     players_df = players_df.with_columns(generate_synthetic_columns(players_df))
 
-    # Validate against schema directly with Polars DataFrame
     validated_df: pl.DataFrame = PlayerSchema.validate(players_df)
 
     return validated_df
