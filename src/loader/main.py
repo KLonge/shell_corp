@@ -1,6 +1,7 @@
 import os
+from collections.abc import Iterator
 from itertools import islice
-from typing import Any, Iterator
+from typing import Any
 
 import dlt
 import pandas as pd

@@ -4,6 +4,8 @@ import random
 import pandas as pd
 import polars as pl
 
+from src.loader.models import PlayerSchema
+
 
 def print_debug_info(
     raw_df: pd.DataFrame, flat_df: pd.DataFrame, final_df: pl.DataFrame
@@ -81,13 +83,16 @@ def generate_synthetic_columns(
 
 
 def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
-    """Transform raw player data into the required format.
+    """Transform raw player data into the required format and validate schema.
 
     Args:
         df: Raw player DataFrame from FBref
 
     Returns:
-        Transformed DataFrame with standardized columns
+        Transformed DataFrame with standardized columns, validated against PlayerSchema
+
+    Raises:
+        patito.ValidationError: If the transformed data doesn't match the schema
     """
     # Extract age as integer from "age" column which has format "27-137"
     players_df = df.with_columns(
@@ -114,4 +119,7 @@ def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
     # Add generated columns
     players_df = players_df.with_columns(generate_synthetic_columns(players_df))
 
-    return players_df
+    # Validate against schema directly with Polars DataFrame
+    validated_df: pl.DataFrame = PlayerSchema.validate(players_df)
+
+    return validated_df

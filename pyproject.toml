@@ -9,6 +9,7 @@ requires-python = ">=3.12"
 dependencies = [
     "duckdb",
     "dlt[duckdb]>=1.4.1",
+    "patito",
     "polars",
     "pyarrow",
     "sqlmesh>=0.38.0",
@@ -37,9 +38,27 @@ markers = [
 ]
 
 [tool.ruff.lint]
+# Ignore E402: Module level import not at top of file
 ignore = ["E402", "E712"]
-select = ['I001', "E4", "E7", "E9", "F"]
-exclude = ["tests/*"]
+select = [
+    'I001',    # isort
+    "E4",      # pycodestyle errors
+    "E7",      # pycodestyle errors
+    "E9",      # pycodestyle errors
+    "F",       # pyflakes
+    "F401",    # unused imports
+    "F403",    # star imports usage
+    "F405",    # star imports usage
+    "F821",    # undefined names
+    "UP",      # pyupgrade (modernize Python code)
+    "RUF"      # ruff-specific rules
+]
+
+# Add format settings to ensure formatting works
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.ruff.lint.isort]
 known-first-party = ["loader"]

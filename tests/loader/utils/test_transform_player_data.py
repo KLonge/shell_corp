@@ -1,5 +1,7 @@
-import pytest
+import patito as pt  # type: ignore
 import polars as pl
+import pytest
+
 from src.loader.utils import transform_player_data
 
 
@@ -68,6 +70,72 @@ def test_given_raw_player_data_when_transforming_then_returns_expected_format() 
     assert result.get_column("age").to_list() == [27, 23]
     assert result.get_column("position").to_list() == ["DF", "FW,MF"]
     assert result.get_column("nation").to_list() == ["ENG", "ENG"]
+
+
+def test_given_valid_data_when_transforming_then_validates_schema() -> None:
+    # Arrange
+    input_df = pl.DataFrame(
+        {
+            "team": ["Manchester United"],
+            "player": ["Marcus Rashford"],
+            "pos": ["FW"],
+            "age": ["25-123"],  # Raw age format
+            "nation": ["ENG"],
+        }
+    )
+
+    # Act
+    result_df = transform_player_data(input_df)
+
+    # Assert - validation happens during transform, no need for extra validation
+    assert isinstance(result_df, pl.DataFrame)
+
+
+def test_given_invalid_age_when_transforming_then_raises_validation_error() -> None:
+    # Arrange
+    input_df = pl.DataFrame(
+        {
+            "team": ["Manchester United"],
+            "player": ["Marcus Rashford"],
+            "pos": ["FW"],
+            "age": ["55-123"],  # Age too high
+            "nation": ["ENG"],
+        }
+    )
+
+    # Act & Assert
+    with pytest.raises(pt.ValidationError):
+        transform_player_data(input_df)
+
+
+def test_given_invalid_market_value_when_transforming_then_raises_validation_error() -> (
+    None
+):
+    # Arrange
+    input_df = pl.DataFrame(
+        {
+            "team": ["Manchester United"],
+            "player": ["Marcus Rashford"],
+            "pos": ["FW"],
+            "age": ["25-123"],
+            "nation": ["ENG"],
+        }
+    )
+
+    # Monkey patch random.randint to return invalid value
+    import random
+
+    original_randint = random.randint
+    # Use a lambda with explicit parameter names to match the original function signature
+    random.randint = lambda a, b: 500  # Invalid market value below 1M euros
+
+    try:
+        # Act & Assert
+        with pytest.raises(pt.ValidationError):
+            transform_player_data(input_df)
+    finally:
+        # Cleanup - always restore the original function
+        random.randint = original_randint
 
 
 if __name__ == "__main__":

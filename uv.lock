@@ -828,6 +828,20 @@ wheels = [
 ]
 
 [[package]]
+name = "patito"
+version = "0.8.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "polars" },
+    { name = "pydantic" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4f/77/376b341a49cf5fb2db16daae561f248fb504d65453f137eeda2a1cbbb443/patito-0.8.3.tar.gz", hash = "sha256:aba7ac6bb640a075e1c22862dd577519a615724db0694ac3ae81a6a3f3993fb1", size = 42640 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/72/f1/4a71d8a974d8f5625045b5351e91e4f93b9a3c14aacbd2777de63c53a851/patito-0.8.3-py3-none-any.whl", hash = "sha256:cc4dd90ec8a867806548a5161af4cf195f3d223fcae24d879285cc003ab89ed4", size = 43331 },
+]
+
+[[package]]
 name = "pendulum"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1518,6 +1532,7 @@ dependencies = [
     { name = "dlt", extra = ["duckdb"] },
     { name = "duckdb" },
     { name = "pandas-stubs" },
+    { name = "patito" },
     { name = "polars" },
     { name = "pyarrow" },
     { name = "soccerdata" },
@@ -1540,6 +1555,7 @@ requires-dist = [
     { name = "duckdb" },
     { name = "mypy", marker = "extra == 'dev'", specifier = "==1.13" },
     { name = "pandas-stubs" },
+    { name = "patito" },
     { name = "polars" },
     { name = "pyarrow" },
     { name = "pytest", marker = "extra == 'dev'" },

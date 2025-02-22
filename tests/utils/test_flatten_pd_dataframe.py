@@ -1,8 +1,6 @@
-import pytest
 import pandas as pd
+import pytest
 
-import pytest
-import pandas as pd
 from src.utils.pandas import flatten_pd_dataframe
 
 
