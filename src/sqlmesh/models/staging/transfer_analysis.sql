@@ -18,7 +18,10 @@ model (
         number_of_rows(
             threshold:= 1
         ),
-        assert_transfer_analysis_quality
+        assert_valid_market_values,
+        assert_valid_age_range,
+        assert_valid_contract_dates,
+        assert_valid_transfer_status
     )
 );
 SELECT
