@@ -2,7 +2,6 @@ import pytest
 import pandas as pd
 
 import pytest
-import polars as pl
 import pandas as pd
 from src.utils.pandas import flatten_pd_dataframe
 

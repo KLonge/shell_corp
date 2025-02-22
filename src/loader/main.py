@@ -3,6 +3,7 @@ from itertools import islice
 from typing import Any, Iterator
 
 import dlt
+import pandas as pd
 import polars as pl
 import soccerdata as sd  # type: ignore
 
@@ -23,10 +24,10 @@ def fetch_premier_league_data(season: str) -> pl.DataFrame:
         fbref: sd.FBref = sd.FBref(leagues="ENG-Premier League", seasons=season)
         raw_stats_df = fbref.read_player_season_stats()
 
-        flat_df = flatten_pd_dataframe(df=raw_stats_df)
+        flat_df: pd.DataFrame = flatten_pd_dataframe(df=raw_stats_df)
 
-        pl_df = pl.from_pandas(data=flat_df)
-        players_df = transform_player_data(df=pl_df)
+        pl_df: pl.DataFrame = pl.from_pandas(data=flat_df)
+        players_df: pl.DataFrame = transform_player_data(df=pl_df)
 
         print_debug_info(raw_df=raw_stats_df, flat_df=flat_df, final_df=players_df)
 
@@ -40,7 +41,7 @@ def fetch_premier_league_data(season: str) -> pl.DataFrame:
 def generate_player_data(chunk_size: int = 100) -> Iterator[list[dict[str, Any]]]:
     """
     This function generates football transfer listing data in chunks.
-    Normally, you could call an API and it would yield data in chunks, 
+    Normally, you could call an API and it would yield data in chunks,
     but we are simulating this for demo purposes.
 
     Args:
@@ -51,16 +52,16 @@ def generate_player_data(chunk_size: int = 100) -> Iterator[list[dict[str, Any]]
     """
     try:
         print("Fetching and transforming player data...")
-        players_df = fetch_premier_league_data(season="2024")
+        players_df: pl.DataFrame = fetch_premier_league_data(season="2024")
 
         print(f"Total records to process: {players_df.height}")
 
-        all_records = players_df.to_dicts()
-        records_iter = iter(all_records)
+        all_records: list[dict[str, Any]] = players_df.to_dicts()
+        records_iter: Iterator[dict[str, Any]] = iter(all_records)
 
         records_processed = 0
         while True:
-            chunk = list(islice(records_iter, chunk_size))
+            chunk: list[dict[str, Any]] = list(islice(records_iter, chunk_size))
             if not chunk:
                 break
 
@@ -83,7 +84,7 @@ def main() -> None:
 
     print("Starting data pipeline...")
     # Create pipeline that loads to database/shell_corp.duckdb
-    pipeline = dlt.pipeline(
+    pipeline: dlt.Pipeline = dlt.pipeline(
         pipeline_name="shell_corp",
         destination=dlt.destinations.duckdb("database/shell_corp.duckdb"),
         dataset_name="raw",

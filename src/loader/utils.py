@@ -1,4 +1,5 @@
 import datetime as dt
+import hashlib
 import random
 
 import pandas as pd
@@ -33,6 +34,34 @@ def print_debug_info(
     print(final_df.schema)
     print("\nSample transformed data (first 2 rows as dicts):")
     print(final_df.head(2).to_dicts())
+
+
+def generate_player_id(name: str, club: str, nation: str) -> str:
+    """
+    Generate a 'unique' (not really, but low chance of collision)
+    player ID based on player attributes.
+
+    Args:
+        name: Player's name
+        club: Current club
+        nation: Player's nationality
+
+    Returns:
+        A unique player ID in format PLY{8 digits}
+    """
+    # Create a consistent string to hash
+    hash_input = f"{name}:{club}:{nation}".lower()
+
+    # Generate SHA-256 hash and take first 8 digits
+    hash_obj = hashlib.sha256(hash_input.encode())
+    hash_hex = hash_obj.hexdigest()
+
+    # Take first 8 characters of hash and convert to integer
+    hash_int = int(hash_hex[:8], 16)
+    # Ensure it's 8 digits by modding with 100000000
+    id_num = hash_int % 100000000
+
+    return f"PLY{id_num:08d}"
 
 
 def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
@@ -74,14 +103,14 @@ def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
     # Add generated columns
     players_df = players_df.with_columns(
         [
-            # Generate random IDs
-            pl.Series(
-                name="id",
-                values=[
-                    f"PLY{random.randint(10000, 99999)}"
-                    for _ in range(players_df.height)
-                ],
-            ),
+            # Generate deterministic IDs based on player attributes
+            pl.struct(["player_name", "current_club", "nation"])
+            .map_elements(
+                lambda x: generate_player_id(
+                    x["player_name"], x["current_club"], x["nation"]
+                )
+            )
+            .alias("id"),
             # Generate random market values between 1M and 100M
             pl.Series(
                 name="market_value_euro",
