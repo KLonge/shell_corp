@@ -16,7 +16,9 @@ DuckDB is used as the data warehouse, DLT loads and validates dummy football tra
 - `src/`
   - `loader/`: DLT scripts for loading data into DuckDB
   - `sqlmesh/`: SQLMesh configuration and models
+    - `audits/`: SQLMesh audits
     - `models/`: SQLMesh transformation models
+    - `tests/`: SQLMesh tests
     - `config.py`: SQLMesh configuration
   - `utils/`: Shared utility functions
 - `tests/`: Unit tests for loader and utility functions
@@ -63,7 +65,7 @@ For simplicity, the SQLMesh models are implemented using full refreshes rather t
 2. Modifying models to use incremental processing
 3. Implementing merge strategies for each model
 
-This could be valuable for larger datasets or more frequent updates.
+This would definitely be done if this was a larger dataset in a real project with more frequent updates.
 
 ## Testing Approach
 
