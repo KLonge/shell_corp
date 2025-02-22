@@ -9,7 +9,8 @@ PYTHON := python
 # Check if we're on Windows
 ifeq ($(OS),Windows_NT)
     PYTHON_CMD := $(CURDIR)/$(VENV_NAME)/Scripts/python
-    UV_CMD := uv.exe
+    # Fix UV path for Windows - use proper path escaping
+    UV_CMD := "$(subst \,/,$(USERPROFILE))/.local/bin/uv.exe"
     # Add these Windows-specific commands
     ACTIVATE := source $(CURDIR)/$(VENV_NAME)/Scripts/activate
     DEACTIVATE := source $(CURDIR)/$(VENV_NAME)/Scripts/deactivate
@@ -81,6 +82,11 @@ show-analysis:
 
 sqlmesh-plan:
 	sqlmesh -p src/sqlmesh plan
+	@echo "\nShowing transfer analysis results:"
+	-@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM staging.transfer_analysis').df())"
+
+sqlmesh-restate:
+	sqlmesh -p src/sqlmesh plan --restate-model staging.transfer_analysis
 	@echo "\nShowing transfer analysis results:"
 	-@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM staging.transfer_analysis').df())"
 

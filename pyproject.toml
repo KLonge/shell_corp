@@ -10,6 +10,7 @@ dependencies = [
     "duckdb",
     "dlt[duckdb]>=1.4.1",
     "sqlmesh>=0.38.0",
+    "soccerdata>=1.0.0",
 ]
 
 [project.optional-dependencies]
