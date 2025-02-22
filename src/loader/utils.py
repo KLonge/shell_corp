@@ -1,3 +1,6 @@
+import datetime as dt
+import random
+
 import pandas as pd
 import polars as pl
 
@@ -36,32 +39,67 @@ def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
     """Transform raw player data into the required format.
 
     Args:
-        df: Raw player DataFrame with flattened column names from FBref
+        df: Raw player DataFrame from FBref
 
     Returns:
-        Transformed DataFrame with standardized columns for transfer analysis
+        Transformed DataFrame with standardized columns
     """
-    players_df = df.select(
+    # Generate random future dates between 2025-03-01 and 2027-12-31
+    min_date = dt.date(2025, 3, 1)
+    max_date = dt.date(2027, 12, 31)
+    days_range = (max_date - min_date).days
+
+    # Extract age as integer from "age" column which has format "27-137"
+    players_df = df.with_columns(
         [
-            "team",
-            "player",
-            "pos",
+            pl.col("team").alias("current_club"),
+            pl.col("player").alias("player_name"),
+            pl.col("pos").alias("position"),
+            # Extract numeric age from "27-137" format
+            pl.col("age").str.split("-").list.first().cast(pl.Int64).alias("age"),
+        ]
+    )
+
+    # Select and rename relevant columns
+    players_df = players_df.select(
+        [
+            "current_club",
+            "player_name",
+            "position",
             "age",
             "nation",
         ]
-    ).rename({"team": "current_club", "player": "player_name", "pos": "position"})
-
-    # Clean age data - extract just the years from "27-137" format
-    players_df = players_df.with_columns(
-        [pl.col("age").str.split("-").list.first().cast(pl.Int64).alias("age")]
     )
 
-    # Add constant columns
+    # Add generated columns
     players_df = players_df.with_columns(
         [
-            pl.lit(None).alias("id"),
-            pl.lit(None).alias("market_value_euro"),
-            pl.lit(None).alias("contract_end_date"),
+            # Generate random IDs
+            pl.Series(
+                name="id",
+                values=[
+                    f"PLY{random.randint(10000, 99999)}"
+                    for _ in range(players_df.height)
+                ],
+            ),
+            # Generate random market values between 1M and 100M
+            pl.Series(
+                name="market_value_euro",
+                values=[
+                    random.randint(1_000_000, 100_000_000)
+                    for _ in range(players_df.height)
+                ],
+            ),
+            # Generate random future contract end dates
+            pl.Series(
+                name="contract_end_date",
+                values=[
+                    (
+                        min_date + dt.timedelta(days=random.randint(0, days_range))
+                    ).isoformat()
+                    for _ in range(players_df.height)
+                ],
+            ),
             pl.lit("available").alias("transfer_status"),
         ]
     )
