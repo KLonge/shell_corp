@@ -4,6 +4,12 @@ import random
 import pandas as pd
 import polars as pl
 
+from src.loader.constants import (
+    CONTRACT_MAX_DAYS,
+    CONTRACT_MIN_DAYS,
+    MARKET_VALUE_MAX,
+    MARKET_VALUE_MIN,
+)
 from src.loader.models import PlayerSchema
 
 
@@ -39,15 +45,32 @@ def print_debug_info(
 
 def generate_synthetic_columns(
     df: pl.DataFrame,
-    market_value_min: int = 1_000_000,
-    market_value_max: int = 100_000_000,
-    contract_min_days: int = 30,
-    contract_max_days: int = 365 * 2,
+    market_value_min: int = MARKET_VALUE_MIN,
+    market_value_max: int = MARKET_VALUE_MAX,
+    contract_min_days: int = CONTRACT_MIN_DAYS,
+    contract_max_days: int = CONTRACT_MAX_DAYS,
 ) -> list[pl.Series]:
-    """Generate synthetic columns for player data."""
+    """Generate synthetic columns for player data.
+
+    Generates synthetic data including player IDs, market values, contract end dates,
+    and transfer status. All generated data follows the PlayerSchema validation rules.
+
+    Args:
+        df: Input DataFrame to generate synthetic columns for
+        market_value_min: Minimum market value in euros
+        market_value_max: Maximum market value in euros
+        contract_min_days: Minimum days until contract end
+        contract_max_days: Maximum days until contract end (must be <= 5*365)
+
+    Returns:
+        List of Polars Series containing the synthetic columns
+    """
     min_date = dt.datetime.now().date() + dt.timedelta(days=contract_min_days)
     max_date = dt.datetime.now().date() + dt.timedelta(days=contract_max_days)
     days_range = (max_date - min_date).days
+
+    # Ensure we generate some unavailable players too
+    transfer_statuses = ["available", "unavailable"]
 
     return [
         # Generate sequential IDs
@@ -66,19 +89,19 @@ def generate_synthetic_columns(
         )
         .cast(pl.Int64)
         .alias("market_value_euro"),
-        # Generate contract end dates
+        # Generate contract end dates as Date type
         pl.Series(
             [
-                (
-                    min_date + dt.timedelta(days=random.randint(0, days_range))
-                ).isoformat()
+                min_date + dt.timedelta(days=random.randint(0, days_range))
                 for _ in range(df.height)
             ]
         )
-        .cast(pl.Utf8)
+        .cast(pl.Date)
         .alias("contract_end_date"),
-        # Static transfer status
-        pl.Series(["available"] * df.height).cast(pl.Utf8).alias("transfer_status"),
+        # Generate random transfer status
+        pl.Series([random.choice(transfer_statuses) for _ in range(df.height)])
+        .cast(pl.Utf8)
+        .alias("transfer_status"),
     ]
 
 

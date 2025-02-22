@@ -138,5 +138,26 @@ def test_given_invalid_market_value_when_transforming_then_raises_validation_err
         random.randint = original_randint
 
 
+def test_given_invalid_data_when_transforming_then_raises_validation_error() -> None:
+    """Test that invalid data raises validation errors."""
+    # Given
+    df = pl.DataFrame(
+        {
+            "team": ["Arsenal"],
+            "player": ["Test Player"],
+            "pos": ["FW"],
+            "age": ["25-100"],
+            "nation": ["ENG"],
+        }
+    )
+
+    # When/Then
+    with pytest.raises(pt.DataFrameValidationError) as exc_info:
+        transform_player_data(df)
+
+    # The error should mention contract_end_date validation
+    assert "contract_end_date" in str(exc_info.value)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
