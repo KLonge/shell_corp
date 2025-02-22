@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 import polars as pl
 import pandas as pd
-from src.loader.utils import flatten_fbref_pd_dataframe
+from src.utils.pandas import flatten_pd_dataframe
 
 
 def test_given_multiindex_dataframe_when_flattening_then_returns_flat_structure() -> (
@@ -29,7 +29,7 @@ def test_given_multiindex_dataframe_when_flattening_then_returns_flat_structure(
     df = pd.DataFrame(data, columns=columns, index=index)
 
     # When
-    result = flatten_fbref_pd_dataframe(df=df)
+    result = flatten_pd_dataframe(df=df)
 
     # Then
     expected_columns = [

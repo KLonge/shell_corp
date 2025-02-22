@@ -5,11 +5,8 @@ import dlt
 import polars as pl
 import soccerdata as sd  # type: ignore
 
-from src.loader.utils import (
-    flatten_fbref_pd_dataframe,
-    print_debug_info,
-    transform_player_data,
-)
+from src.loader.utils import print_debug_info, transform_player_data
+from src.utils.pandas import flatten_pd_dataframe
 
 
 def fetch_premier_league_data(season: str) -> list[dict[str, Any]]:
@@ -27,7 +24,7 @@ def fetch_premier_league_data(season: str) -> list[dict[str, Any]]:
         raw_stats = fbref.read_player_season_stats()
 
         # Flatten the complex pandas DataFrame structure
-        flat_df = flatten_fbref_pd_dataframe(df=raw_stats)
+        flat_df = flatten_pd_dataframe(df=raw_stats)
 
         # Convert to polars and transform
         pl_df = pl.from_pandas(data=flat_df)

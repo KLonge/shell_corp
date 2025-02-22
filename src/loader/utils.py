@@ -32,30 +32,6 @@ def print_debug_info(
     print(final_df.head(2).to_dicts())
 
 
-def flatten_fbref_pd_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """Flatten FBref's multi-index DataFrame into a simple format.
-
-    Takes a raw FBref DataFrame with multi-index columns and hierarchical index
-    and converts it to a flat DataFrame with simple column names and no index.
-
-    Args:
-        df: Raw DataFrame from FBref with multi-index columns
-
-    Returns:
-        Flattened DataFrame with standardized column names
-    """
-    # Create a copy to avoid modifying the input
-    flat_df = df.copy()
-
-    # Flatten multi-index columns
-    flat_df.columns = pd.Index(
-        [f"{col[0]}_{col[1]}" if col[1] != "" else col[0] for col in flat_df.columns]
-    )
-
-    # Reset the hierarchical index to columns
-    return flat_df.reset_index()
-
-
 def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
     """Transform raw player data into the required format.
 
