@@ -37,7 +37,6 @@ def print_debug_info(
 
 def generate_synthetic_columns(
     df: pl.DataFrame,
-    *,  # Force keyword arguments
     market_value_min: int = 1_000_000,
     market_value_max: int = 100_000_000,
     contract_min_days: int = 30,
