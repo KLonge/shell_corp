@@ -1,0 +1,113 @@
+test_given_market_values_when_categorizing_then_assigns_correct_value_tiers:
+  model: staging.transfer_analysis
+  inputs:
+    raw.transfer_listings:
+      rows:
+        - player_name: "Premium Star"
+          current_club: "Top Club"
+          position: "Forward"
+          market_value_euro: 20000000  # Exactly Premium threshold
+          contract_end_date: '2025-01-01'
+          age: 25
+          transfer_status: "available"
+        - player_name: "High Value Player"
+          current_club: "Good Club"
+          position: "Midfielder"
+          market_value_euro: 10000000  # Exactly High Value threshold
+          contract_end_date: '2025-01-01'
+          age: 23
+          transfer_status: "available"
+        - player_name: "Mid Range Player"
+          current_club: "Mid Club"
+          position: "Defender"
+          market_value_euro: 5000000  # Exactly Mid Range threshold
+          contract_end_date: '2025-01-01'
+          age: 21
+          transfer_status: "available"
+        - player_name: "Development Player"
+          current_club: "Small Club"
+          position: "Goalkeeper"
+          market_value_euro: 4999999  # Just below Mid Range threshold
+          contract_end_date: '2025-01-01'
+          age: 19
+          transfer_status: "available"
+  outputs:
+    staging.transfer_analysis:
+      rows:
+        - value_tier: "Premium"
+          market_value_euro: 20000000
+        - value_tier: "High Value"
+          market_value_euro: 10000000
+        - value_tier: "Mid Range"
+          market_value_euro: 5000000
+        - value_tier: "Development"
+          market_value_euro: 4999999
+  vars:
+    execution_time: '2024-01-01'
+
+test_given_contract_dates_when_categorizing_then_assigns_correct_status:
+  model: staging.transfer_analysis
+  inputs:
+    raw.transfer_listings:
+      rows:
+        - player_name: "Urgent Contract"
+          current_club: "Club A"
+          position: "Forward"
+          market_value_euro: 10000000
+          contract_end_date: '2024-06-30'  # Exactly 6 months from execution_time
+          age: 25
+          transfer_status: "available"
+        - player_name: "Watch List Contract"
+          current_club: "Club B"
+          position: "Midfielder"
+          market_value_euro: 10000000
+          contract_end_date: '2024-12-31'  # Exactly 1 year from execution_time
+          age: 23
+          transfer_status: "available"
+        - player_name: "Long Term Contract"
+          current_club: "Club C"
+          position: "Defender"
+          market_value_euro: 10000000
+          contract_end_date: '2025-01-01'  # Just over 1 year
+          age: 21
+          transfer_status: "available"
+  outputs:
+    staging.transfer_analysis:
+      rows:
+        - contract_status: "Urgent"
+          contract_end_date: '2024-06-30'
+        - contract_status: "Watch List"
+          contract_end_date: '2024-12-31'
+        - contract_status: "Long Term"
+          contract_end_date: '2025-01-01'
+  vars:
+    execution_time: '2024-01-01'
+
+test_given_transfer_status_when_processing_then_sets_correct_availability:
+  model: staging.transfer_analysis
+  inputs:
+    raw.transfer_listings:
+      rows:
+        - player_name: "Available Player"
+          current_club: "Club A"
+          position: "Forward"
+          market_value_euro: 10000000
+          contract_end_date: '2025-01-01'
+          age: 25
+          transfer_status: "available"
+        - player_name: "Unavailable Player"
+          current_club: "Club B"
+          position: "Midfielder"
+          market_value_euro: 10000000
+          contract_end_date: '2025-01-01'
+          age: 23
+          transfer_status: "not available"
+  outputs:
+    staging.transfer_analysis:
+      rows:
+        - transfer_status: "available"
+          is_available: true
+        - transfer_status: "not available"
+          is_available: false
+  vars:
+    execution_time: '2024-01-01' 

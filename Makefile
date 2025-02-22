@@ -74,11 +74,17 @@ dlt:
 	@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM raw.transfer_listings').df())"
 
 sqlmesh-plan:
-	$(PYTHON_CMD) -m sqlmesh -p src/sqlmesh plan
+	cd src/sqlmesh && ../../$(VENV_NAME)/Scripts/sqlmesh plan
 	@echo "\nShowing transfer analysis results:"
 	-@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM staging.transfer_analysis').df())"
 
 sqlmesh-restate:
-	$(PYTHON_CMD) -m sqlmesh -p src/sqlmesh plan --restate-model staging.transfer_analysis
+	cd src/sqlmesh && ../../$(VENV_NAME)/Scripts/sqlmesh plan --restate-model staging.transfer_analysis
+
+sqlmesh-test:
+	cd src/sqlmesh && ../../$(VENV_NAME)/Scripts/sqlmesh test
+
+sqlmesh-audit:
+	cd src/sqlmesh && ../../$(VENV_NAME)/Scripts/sqlmesh audit
 
 .PHONY: init install-python install-python-deps upgrade-python-deps clean test test-debug mypy dlt sqlmesh-plan sqlmesh-restate clean-venv create-venv install-deps reinstall activate deactivate list-packages show-tree check-env
