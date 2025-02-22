@@ -1,5 +1,4 @@
 import datetime as dt
-import hashlib
 import random
 
 import pandas as pd
@@ -36,32 +35,50 @@ def print_debug_info(
     print(final_df.head(2).to_dicts())
 
 
-def generate_player_id(name: str, club: str, nation: str) -> str:
-    """
-    Generate a 'unique' (not really, but low chance of collision)
-    player ID based on player attributes.
+def generate_synthetic_columns(
+    df: pl.DataFrame,
+    *,  # Force keyword arguments
+    market_value_min: int = 1_000_000,
+    market_value_max: int = 100_000_000,
+    contract_min_days: int = 30,
+    contract_max_days: int = 365 * 2,
+) -> list[pl.Series]:
+    """Generate synthetic columns for player data."""
+    min_date = dt.datetime.now().date() + dt.timedelta(days=contract_min_days)
+    max_date = dt.datetime.now().date() + dt.timedelta(days=contract_max_days)
+    days_range = (max_date - min_date).days
 
-    Args:
-        name: Player's name
-        club: Current club
-        nation: Player's nationality
-
-    Returns:
-        A unique player ID in format PLY{8 digits}
-    """
-    # Create a consistent string to hash
-    hash_input = f"{name}:{club}:{nation}".lower()
-
-    # Generate SHA-256 hash and take first 8 digits
-    hash_obj = hashlib.sha256(hash_input.encode())
-    hash_hex = hash_obj.hexdigest()
-
-    # Take first 8 characters of hash and convert to integer
-    hash_int = int(hash_hex[:8], 16)
-    # Ensure it's 8 digits by modding with 100000000
-    id_num = hash_int % 100000000
-
-    return f"PLY{id_num:08d}"
+    return [
+        # Generate sequential IDs
+        pl.int_range(1, df.height + 1, eager=True)
+        .cast(pl.Int64)
+        .map_elements(
+            lambda x: f"PLY{int(x):08d}", return_dtype=pl.Utf8, skip_nulls=False
+        )
+        .alias("id"),
+        # Generate market values
+        pl.Series(
+            [
+                random.randint(market_value_min, market_value_max)
+                for _ in range(df.height)
+            ]
+        )
+        .cast(pl.Int64)
+        .alias("market_value_euro"),
+        # Generate contract end dates
+        pl.Series(
+            [
+                (
+                    min_date + dt.timedelta(days=random.randint(0, days_range))
+                ).isoformat()
+                for _ in range(df.height)
+            ]
+        )
+        .cast(pl.Utf8)
+        .alias("contract_end_date"),
+        # Static transfer status
+        pl.Series(["available"] * df.height).cast(pl.Utf8).alias("transfer_status"),
+    ]
 
 
 def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
@@ -73,11 +90,6 @@ def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
     Returns:
         Transformed DataFrame with standardized columns
     """
-    # Generate random future dates between 2025-03-01 and 2027-12-31
-    min_date = dt.date(2025, 3, 1)
-    max_date = dt.date(2027, 12, 31)
-    days_range = (max_date - min_date).days
-
     # Extract age as integer from "age" column which has format "27-137"
     players_df = df.with_columns(
         [
@@ -101,36 +113,6 @@ def transform_player_data(df: pl.DataFrame) -> pl.DataFrame:
     )
 
     # Add generated columns
-    players_df = players_df.with_columns(
-        [
-            # Generate deterministic IDs based on player attributes
-            pl.struct(["player_name", "current_club", "nation"])
-            .map_elements(
-                lambda x: generate_player_id(
-                    x["player_name"], x["current_club"], x["nation"]
-                )
-            )
-            .alias("id"),
-            # Generate random market values between 1M and 100M
-            pl.Series(
-                name="market_value_euro",
-                values=[
-                    random.randint(1_000_000, 100_000_000)
-                    for _ in range(players_df.height)
-                ],
-            ),
-            # Generate random future contract end dates
-            pl.Series(
-                name="contract_end_date",
-                values=[
-                    (
-                        min_date + dt.timedelta(days=random.randint(0, days_range))
-                    ).isoformat()
-                    for _ in range(players_df.height)
-                ],
-            ),
-            pl.lit("available").alias("transfer_status"),
-        ]
-    )
+    players_df = players_df.with_columns(generate_synthetic_columns(players_df))
 
     return players_df
