@@ -169,3 +169,19 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Add to existing .gitignore
+*.duckdb
+*.duckdb.wal
+database/*
+!database/.gitkeep
+
+# Virtual Environment
+.venv/
+.env/
+venv/
+ENV/
+
+.vscode/
+/database/
+/logs/
