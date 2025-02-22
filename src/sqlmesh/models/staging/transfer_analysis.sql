@@ -29,7 +29,7 @@ SELECT
     current_club,
     POSITION,
     market_value_euro,
-    DATE(contract_end_date) AS contract_end_date,
+    contract_end_date,
     age,
     transfer_status,
     CASE
@@ -39,8 +39,8 @@ SELECT
         ELSE 'Development'
     END AS value_tier,
     CASE
-        WHEN DATE(contract_end_date) <= CURRENT_DATE + INTERVAL '6 months' THEN 'Urgent'
-        WHEN DATE(contract_end_date) <= CURRENT_DATE + INTERVAL '1 year' THEN 'Watch List'
+        WHEN contract_end_date <= CURRENT_DATE + INTERVAL '6 months' THEN 'Urgent'
+        WHEN contract_end_date <= CURRENT_DATE + INTERVAL '1 year' THEN 'Watch List'
         ELSE 'Long Term'
     END AS contract_status,
     CASE

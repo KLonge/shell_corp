@@ -38,7 +38,11 @@ def fetch_premier_league_data(season: str) -> pl.DataFrame:
         raise Exception(f"Error fetching FBref data: {e}")
 
 
-@dlt.resource(name="transfer_listings", write_disposition="replace")
+@dlt.resource(
+    name="transfer_listings",
+    write_disposition="replace",
+    columns={"contract_end_date": {"data_type": "date"}},
+)
 def generate_player_data(chunk_size: int = 100) -> Iterator[list[dict[str, Any]]]:
     """
     This function generates football transfer listing data in chunks.
@@ -58,6 +62,7 @@ def generate_player_data(chunk_size: int = 100) -> Iterator[list[dict[str, Any]]
         print(f"Total records to process: {players_df.height}")
 
         all_records: list[dict[str, Any]] = players_df.to_dicts()
+
         records_iter: Iterator[dict[str, Any]] = iter(all_records)
 
         records_processed = 0
