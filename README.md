@@ -1,7 +1,19 @@
-# Shell Corp Data Pipeline
+# Shell Corp Take Home
+
+This repository contains the code for my submission to the Shell Corp Take Home assignment.
+
+## Architecture
+
+The architecture is described in the PDF `diagrams/shell_corp_take_home_assignment.pdf`. This contains images of the current and proposed architecture diagrams. There is also a description of the current data pipeline and proposed changes. Images can be found separately in the `diagrams` folder (`.png` and `.svg` versions).
+
+## Data Pipeline (Basic Example)
 
 A sample project demonstrating the integration of DuckDB, DLT, and SQLMesh. 
 DuckDB is used as the data warehouse, DLT loads and validates dummy football transfer data, and SQLMesh handles data transformations with built-in testing and validation.
+
+I have skipped the steps regarding converting the CDC logs to tables representing their active state as it would probably take too long to do in the time frame. I will happily explain it in the interview though.
+
+**NOTE:** Don't be surprised if make init doesn't work. The original version of the Makefile was for Mac but I had to make it work for Windows which caused some hiccups.
 
 ## Setup
 
@@ -40,8 +52,8 @@ DuckDB is used as the data warehouse, DLT loads and validates dummy football tra
 - `make sqlmesh-plan`: Execute SQLMesh transformations (only applies changes if models or data have changed)
 - `make sqlmesh-run`: Run models based on their configured schedules
 - `make sqlmesh-restate`: Force rerun of specific model transformations regardless of changes
-- `make sqlmesh-test`: Run SQLMesh model tests
-- `make sqlmesh-audit`: Run data quality audits
+- `make sqlmesh-test`: Run SQLMesh model unit tests
+- `make sqlmesh-audit`: Run data quality audits / checks
 
 ### SQLMesh Execution Model
 
@@ -101,10 +113,7 @@ SQLMesh models include:
 
 ## Implementation Notes
 
-For simplicity, the SQLMesh models are implemented using full refreshes rather than incremental processing. Converting to incremental processing would involve:
-1. Adding timestamp/version columns to source data
-2. Modifying models to use incremental processing
-3. Implementing merge strategies for each model
+For simplicity, the SQLMesh models are implemented using full refreshes rather than incremental processing. Converting to incremental processing would involve adding timestamp/version columns to source data, which doesnt make sense in this example.
 
 This would definitely be done if this was a larger dataset in a real project with more frequent updates.
 
