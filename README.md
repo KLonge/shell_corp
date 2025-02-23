@@ -43,8 +43,7 @@ I have skipped the steps regarding converting the CDC logs to tables representin
 - `make upgrade-python-deps`: Upgrade all Python dependencies
 
 ### Testing & Validation
-- `make test`: Run all unit tests with coverage report
-- `make test-debug`: Run tests in debug mode with detailed logging
+- `make test`: Run all unit tests with coverage report and verbose logging
 - `make mypy`: Run static type checking
 
 ### Data Pipeline
