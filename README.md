@@ -4,7 +4,7 @@ This repository contains the PDF and small code sample (rough draft) for my subm
 
 ## Architecture
 
-The architecture is described in the PDF `shell_corp_take_home_assignment.pdf`. This contains images of the current and proposed architecture diagrams. There is also a description of the current data pipeline and proposed changes. Images can be found separately in the `diagrams` folder (`.png` and `.svg` versions).
+The architecture is described in the PDF `proposal.pdf`. This contains images of the current and proposed architecture diagrams. There is also a description of the current data pipeline and proposed changes. Images can be found separately in the `diagrams` folder (`.png` and `.svg` versions).
 
 ## Data Pipeline (Basic Example)
 
