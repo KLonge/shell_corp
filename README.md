@@ -13,7 +13,7 @@ DuckDB is used as the data warehouse, DLT loads and validates dummy football tra
 
 I have skipped the steps regarding converting the CDC logs to tables representing their active state as it would probably take too long to do in the time frame. I will happily explain it in the interview though.
 
-**NOTE:** Don't be surprised if make init doesn't work. The original version of the Makefile was for Mac but I had to make it work for Windows which caused some hiccups.
+**NOTE:** Don't be surprised if `make init` doesn't work. The original version of the Makefile was for Mac but I had to make it work for Windows which caused some hiccups.
 
 ## Setup
 

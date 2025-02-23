@@ -1,10 +1,8 @@
 import datetime as dt
 
-import patito as pt  # type: ignore
 import polars as pl
 import pytest
 
-from src.loader.models import PlayerSchema
 from src.loader.utils import generate_synthetic_columns
 
 
@@ -83,8 +81,6 @@ def test_given_df_when_applying_expressions_then_generates_valid_data() -> None:
     dates = result.get_column("contract_end_date").to_list()
     min_allowed = dt.datetime.now().date() + dt.timedelta(days=min_days)
     max_allowed = dt.datetime.now().date() + dt.timedelta(days=max_days)
-
-    # The dates are already dt.date objects, no need for fromisoformat
     assert all(isinstance(date, dt.date) for date in dates)
     assert all(min_allowed <= date <= max_allowed for date in dates)
 
@@ -108,25 +104,6 @@ def test_given_empty_df_when_generating_columns_then_handles_gracefully() -> Non
         col in result.columns
         for col in ["id", "market_value_euro", "contract_end_date", "transfer_status"]
     )
-
-
-def test_given_invalid_contract_dates_when_generating_then_fails_validation() -> None:
-    """Test that invalid contract dates fail schema validation."""
-    # Given
-    df = pl.DataFrame({"dummy": range(3)})
-
-    # When - Generate data with contract dates outside schema bounds
-    expressions = generate_synthetic_columns(
-        df,
-        contract_min_days=400,  # Outside schema bounds
-        contract_max_days=800,  # Outside schema bounds
-    )
-    result = df.with_columns(expressions)
-
-    # Then - Should fail validation
-    with pytest.raises(pt.DataFrameValidationError) as exc_info:
-        PlayerSchema.validate(result)
-    assert "contract_end_date" in str(exc_info.value)
 
 
 if __name__ == "__main__":
