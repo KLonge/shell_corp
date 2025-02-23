@@ -9,7 +9,7 @@ The architecture is described in the PDF `shell_corp_take_home_assignment.pdf`. 
 ## Data Pipeline (Basic Example)
 
 A sample project demonstrating the integration of DuckDB, DLT, and SQLMesh. 
-DuckDB is used as the data warehouse, DLT loads and validates dummy football transfer data, and SQLMesh handles data transformations with built-in testing and validation.
+DuckDB is used as the data warehouse, DLT loads and validates dummy (semi-real) football transfer data, and SQLMesh handles data transformations with built-in testing and validation.
 
 I have skipped the steps regarding converting the CDC logs to tables representing their active state as it would probably take too long to do in the time frame. I will happily explain it in the interview though.
 
