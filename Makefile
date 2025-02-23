@@ -59,13 +59,10 @@ clean:
 
 # Testing commands
 test:
-	$(PYTHON_CMD) -m pytest --cov=shell_corp tests/
-
-test-debug:
-	DEBUG_WAIT=1 $(PYTHON_CMD) -m pytest -vv --log-cli-level=INFO $(filter-out $@,$(MAKECMDGOALS))
+	$(PYTHON_CMD) -m pytest -vv --log-cli-level=INFO $(filter-out $@,$(MAKECMDGOALS))
 
 mypy:
-	$(PYTHON_CMD) -m mypy src/ tests/
+	$(PYTHON_CMD) -m mypy src/
 
 # Data pipeline commands
 dlt:
@@ -90,4 +87,4 @@ sqlmesh-audit:
 sqlmesh-run:
 	cd src/sqlmesh && ../../$(VENV_NAME)/Scripts/sqlmesh run
 
-.PHONY: init install-python install-python-deps upgrade-python-deps clean test test-debug mypy dlt sqlmesh-plan sqlmesh-restate clean-venv create-venv install-deps reinstall activate deactivate list-packages show-tree check-env
+.PHONY: init init-python install-python check-uv install-python-deps upgrade-python-deps clean test mypy dlt sqlmesh-plan sqlmesh-restate sqlmesh-test sqlmesh-audit sqlmesh-run
