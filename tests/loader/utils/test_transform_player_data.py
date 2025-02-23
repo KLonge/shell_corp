@@ -73,7 +73,7 @@ def test_given_raw_player_data_when_transforming_then_returns_expected_format() 
     assert result.get_column("nation").to_list() == ["ENG", "ENG"]
 
 
-def test_given_valid_data_when_transforming_then_validates_schema() -> None:
+def test_given_valid_data_when_transforming_then_no_validation_errors() -> None:
     # Arrange
     input_df = pl.DataFrame(
         {
