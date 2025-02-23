@@ -37,10 +37,51 @@ DuckDB is used as the data warehouse, DLT loads and validates dummy football tra
 
 ### Data Pipeline
 - `make dlt`: Load sample football transfer data into DuckDB
-- `make sqlmesh-plan`: Execute SQLMesh transformations
-- `make sqlmesh-restate`: Rerun specific model transformations
+- `make sqlmesh-plan`: Execute SQLMesh transformations (only applies changes if models or data have changed)
+- `make sqlmesh-run`: Run models based on their configured schedules
+- `make sqlmesh-restate`: Force rerun of specific model transformations regardless of changes
 - `make sqlmesh-test`: Run SQLMesh model tests
 - `make sqlmesh-audit`: Run data quality audits
+
+### SQLMesh Execution Model
+
+SQLMesh uses an intelligent execution model to determine when to run transformations:
+
+1. **Plan vs Run**:
+   - `sqlmesh plan` is used for deploying changes to models and synchronizing environments
+   - `sqlmesh run` is used for scheduled execution of models based on their cron parameters
+   - Use `plan` during development and deployment
+   - Use `run` for production scheduled execution
+
+2. **Plan Behavior**:
+   - `sqlmesh plan` only applies changes when:
+     - Model definitions have changed
+     - New data is available
+     - Models haven't been run for their scheduled interval
+   - Running `plan` multiple times without changes will not trigger re-execution
+
+3. **Run Behavior**:
+   - `sqlmesh run` checks each model's cron schedule
+   - Only executes models whose scheduled interval has elapsed since last run
+   - Does not re-execute models that have run within their interval
+   - Typically executed on a schedule (e.g., via crontab) at least as frequently as your shortest model interval
+   - Example: If models run every 5 minutes, schedule `sqlmesh run` every 5 minutes
+
+4. **Cron Scheduling**:
+   - Models use `cron '*/5 * * * *'` configuration (runs every 5 minutes)
+   - SQLMesh tracks the last successful run time
+   - A model will only run if:
+     - It hasn't been run in the last 5 minutes, OR
+     - You explicitly force a rerun with `sqlmesh-restate`
+   - The schedule is based on exact intervals, not calendar days
+   - Forward-only runs don't mark the interval as complete
+
+5. **Restate Command**:
+   - Use `make sqlmesh-restate` to force model re-execution
+   - Useful for:
+     - Testing changes during development
+     - Fixing data quality issues
+     - Backfilling historical data
 
 ## Data Quality & Validation
 

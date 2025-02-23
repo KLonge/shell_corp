@@ -1,7 +1,7 @@
 model (
     NAME staging.transfer_analysis,
     kind full,
-    cron '@daily',
+    cron '*/5 * * * *',
     dialect duckdb,
     audits (
         not_null(
@@ -29,7 +29,7 @@ SELECT
     current_club,
     POSITION,
     market_value_euro,
-    contract_end_date,
+    DATE(contract_end_date) AS contract_end_date,
     age,
     transfer_status,
     CASE

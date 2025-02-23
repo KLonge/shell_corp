@@ -87,4 +87,7 @@ sqlmesh-test:
 sqlmesh-audit:
 	cd src/sqlmesh && ../../$(VENV_NAME)/Scripts/sqlmesh audit
 
+sqlmesh-run:
+	cd src/sqlmesh && ../../$(VENV_NAME)/Scripts/sqlmesh run
+
 .PHONY: init install-python install-python-deps upgrade-python-deps clean test test-debug mypy dlt sqlmesh-plan sqlmesh-restate clean-venv create-venv install-deps reinstall activate deactivate list-packages show-tree check-env
