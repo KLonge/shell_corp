@@ -13,14 +13,14 @@ DuckDB is used as the data warehouse, DLT loads and validates dummy (semi-real) 
 
 I have skipped the steps regarding converting the CDC logs to tables representing their active state as it would probably take too long to do in the time frame. I will happily explain it in the interview though.
 
-**NOTE:** Don't be surprised if `make init` doesn't work. The original version of the Makefile was for Mac but I had to make it work for Windows which caused some hiccups.
-
 ## Setup
 
 1. Install UV package manager (if not already installed)
 2. Run `make init` to set up the Python environment
 3. Run `make dlt` to load sample data into DuckDB
 4. Run `make sqlmesh-plan` to execute SQLMesh transformations
+
+**NOTE:** Don't be surprised if the `make init` command doesn't work. The original version of the Makefile was for Mac but I had to make it work for Windows which caused some hiccups.
 
 ## Project Structure
 
