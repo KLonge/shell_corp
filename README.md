@@ -2,7 +2,7 @@
 
 This repository contains the PDF and small code sample (rough draft) for my submission to the Shell Corp Take Home assignment.
 
-**NOTE:** I have called this shell corp take home (rather than the actual company name) so that it's less likely that other potential candidates in the future find this by accident (especially if the intent is to reuse this take home assignment for new hires in the future). Virgin asked me to do something similar when I interviewed with them some years ago. I am guessing that people would look for answers to take home assignments online during active interview processes.
+**NOTE:** I have called this shell corp take home (rather than the actual company name) so that it's less likely that other potential candidates in the future find this by accident (especially if the intent is to reuse this take home assignment for new hires in the future). Virgin asked me to do something similar when I interviewed with them some years ago. I am guessing that some people would look for answers to take home assignments online during active interview processes.
 
 ## Architecture
 
