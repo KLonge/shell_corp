@@ -73,25 +73,6 @@ def test_given_raw_player_data_when_transforming_then_returns_expected_format() 
     assert result.get_column("nation").to_list() == ["ENG", "ENG"]
 
 
-def test_given_valid_data_when_transforming_then_no_validation_errors() -> None:
-    # Arrange
-    input_df = pl.DataFrame(
-        {
-            "team": ["Manchester United"],
-            "player": ["Marcus Rashford"],
-            "pos": ["FW"],
-            "age": ["25-123"],  # Raw age format
-            "nation": ["ENG"],
-        }
-    )
-
-    # Act
-    result_df = transform_player_data(input_df)
-
-    # Assert - validation happens during transform, no need for extra validation
-    assert isinstance(result_df, pl.DataFrame)
-
-
 def test_given_invalid_age_when_transforming_then_raises_validation_error() -> None:
     # Arrange
     input_df = pl.DataFrame(
@@ -110,7 +91,7 @@ def test_given_invalid_age_when_transforming_then_raises_validation_error() -> N
         print(data)
 
 
-def test_given_invalid_market_value_when_transforming_then_validates_range() -> None:
+def test_given_valid_data_when_transforming_then_returns_valid_market_values() -> None:
     """Test that market values are within the expected range."""
     # Given
     input_df = pl.DataFrame(

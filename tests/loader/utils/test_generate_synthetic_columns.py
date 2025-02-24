@@ -20,10 +20,10 @@ def sample_df() -> pl.DataFrame:
     )
 
 
-def test_given_sample_df_when_generating_columns_then_returns_correct_expressions() -> (
+def test_given_sample_df_when_generating_columns_then_returns_correct_column_names() -> (
     None
 ):
-    """Test that generate_synthetic_columns returns the expected expressions."""
+    """Test that generate_synthetic_columns returns the expected column names."""
     # Given
     df = pl.DataFrame({"dummy": range(3)})  # Simple df with 3 rows
 
@@ -44,8 +44,10 @@ def test_given_sample_df_when_generating_columns_then_returns_correct_expression
     ]
 
 
-def test_given_df_when_applying_expressions_then_generates_valid_data() -> None:
-    """Test that the generated expressions produce valid data when applied."""
+def test_given_sample_df_when_applying_expressions_then_generates_valid_synthetic_data() -> (
+    None
+):
+    """Test that the generated expressions produce valid synthetic data."""
     # Given
     df = pl.DataFrame({"dummy": range(3)})
     market_min = 2_000_000
