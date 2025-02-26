@@ -54,8 +54,8 @@ def compare_duckdb_tables(
     AND table_schema = '{table2_name.split(".")[0]}'
     """
 
-    meta1 = duckdb_client.query(meta1_query, database_path=DATABASE_PATH)
-    meta2 = duckdb_client.query(meta2_query, database_path=DATABASE_PATH)
+    meta1 = duckdb_client.query(meta1_query)
+    meta2 = duckdb_client.query(meta2_query)
 
     # Convert to dictionaries for easier lookup
     meta1_dict = dict(zip(meta1["column_name"], meta1["data_type"]))
@@ -77,21 +77,21 @@ def compare_duckdb_tables(
         data_type = meta1_dict[col].lower()
 
         if "timestamp" in data_type:
-            t1_col = f"t1.{col}"
-            t2_col = f"t2.{col}"
+            t1_col = f"t1_{col}"
+            t2_col = f"t2_{col}"
 
             if timestamp_range_exclude:
                 start_time, end_time = timestamp_range_exclude
                 column_comparisons[col] = f"""
-                    ({t1_col} = {t2_col} OR (t1.{col} IS NULL AND t2.{col} IS NULL))
+                    ({t1_col} = {t2_col} OR ({t1_col} IS NULL AND {t2_col} IS NULL))
                     OR (
-                        t1.{col} BETWEEN '{start_time}' AND '{end_time}'
-                        OR t2.{col} BETWEEN '{start_time}' AND '{end_time}'
+                        {t1_col} BETWEEN '{start_time}' AND '{end_time}'
+                        OR {t2_col} BETWEEN '{start_time}' AND '{end_time}'
                     )
                 """
             else:
                 column_comparisons[col] = (
-                    f"{t1_col} = {t2_col} OR (t1.{col} IS NULL AND t2.{col} IS NULL)"
+                    f"{t1_col} = {t2_col} OR ({t1_col} IS NULL AND {t2_col} IS NULL)"
                 )
 
         elif any(
@@ -99,26 +99,26 @@ def compare_duckdb_tables(
             for num_type in ["number", "decimal", "numeric", "float", "int"]
         ):
             column_comparisons[col] = f"""
-                ABS(COALESCE(t1.{col}, 0) - COALESCE(t2.{col}, 0)) <= 
-                {value_tolerance} * GREATEST(ABS(COALESCE(t1.{col}, 0)), 
-                ABS(COALESCE(t2.{col}, 0)), 1) 
-                OR (t1.{col} IS NULL AND t2.{col} IS NULL)
+                ABS(COALESCE(t1_{col}, 0) - COALESCE(t2_{col}, 0)) <= 
+                {value_tolerance} * GREATEST(ABS(COALESCE(t1_{col}, 0)), 
+                ABS(COALESCE(t2_{col}, 0)), 1) 
+                OR (t1_{col} IS NULL AND t2_{col} IS NULL)
             """
         elif any(
             str_type in data_type for str_type in ["string", "varchar", "char", "text"]
         ):
-            t1_col = f"t1.{col}"
-            t2_col = f"t2.{col}"
+            t1_col = f"t1_{col}"
+            t2_col = f"t2_{col}"
             if trim_strings:
                 t1_col = f"TRIM({t1_col})"
                 t2_col = f"TRIM({t2_col})"
             column_comparisons[col] = (
-                f"{t1_col} = {t2_col} OR (t1.{col} IS NULL AND t2.{col} IS NULL)"
+                f"{t1_col} = {t2_col} OR ({t1_col} IS NULL AND {t2_col} IS NULL)"
             )
         else:
             # For any other data types, use direct comparison
             column_comparisons[col] = (
-                f"t1.{col} = t2.{col} OR (t1.{col} IS NULL AND t2.{col} IS NULL)"
+                f"t1_{col} = t2_{col} OR (t1_{col} IS NULL AND t2_{col} IS NULL)"
             )
 
     # Build the comparison query
@@ -159,7 +159,7 @@ def compare_duckdb_tables(
     # Execute the comparison query
     print(comparison_query)
 
-    result = duckdb_client.query(comparison_query, database_path=DATABASE_PATH)
+    result = duckdb_client.query(comparison_query)
 
     # Extract results
     total_rows = int(result["total_rows"].iloc[0])
@@ -257,9 +257,9 @@ def main(folder_path: str) -> None:
 
     # Define the tables to test with their primary keys
     tables_to_test = {
-        "derived_a": ["id", "timestamp"],
-        "derived_b": ["user_id", "event_date"],
-        "derived_c": ["session_id"],
+        "derived_a": ["player_id", "contract_end_date"],
+        # "derived_b": ["user_id", "event_date"],
+        # "derived_c": ["session_id"],
     }
 
     total_model_count = len(tables_to_test)

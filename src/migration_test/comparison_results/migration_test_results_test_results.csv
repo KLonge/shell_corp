@@ -1,0 +1,4 @@
+folder_path,model_name,passed,failed_row_percentage,total_rows,failed_columns,value_tolerance,row_tolerance
+migration_test_results,derived_a,True,0.0,0,{},0.2,0.01
+migration_test_results,derived_b,False,100.0,2,"{'selling_club': 2, 'contract_length_years': 2, 'position': 1, 'market_value_millions': 2, 'transfer_fee_millions': 1, 'transfer_window': 1, 'salary_thousands_weekly': 1, 'buying_club_id': 2, 'nationality': 2, 'player_name': 2, 'buying_club': 2, 'player_id': 2, 'selling_league': 1, 'selling_club_id': 2, 'transfer_date': 2, 'buying_league': 2}",0.2,0.01
+migration_test_results,derived_c,False,100.0,10,{'metrics_json': 10},0.2,0.01

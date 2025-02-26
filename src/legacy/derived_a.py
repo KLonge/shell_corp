@@ -1,5 +1,7 @@
 """Legacy module for derived table A using straightforward SQL approach."""
 
+import os
+
 import duckdb
 
 
@@ -20,6 +22,7 @@ def create_derived_table_a() -> None:
     """Create derived table A using straightforward SQL approach.
 
     This function creates a derived table of top players by market value.
+    It loads the SQL query from a file instead of using a hardcoded query.
     """
     # Connect to the database
     conn = duckdb.connect("database/legacy/transferroom.duckdb")
@@ -27,26 +30,12 @@ def create_derived_table_a() -> None:
     # Create the derived table
     print("Creating derived table A (top_players_by_value)...")
 
-    # Use a hardcoded query instead of loading from file
-    query = """
-    SELECT
-        p.player_id,
-        p.name,
-        p.position,
-        p.age,
-        p.nationality,
-        p.current_club,
-        p.market_value_millions,
-        p.contract_end_date,
-        'Unknown' AS league,
-        'Unknown' AS country
-    FROM
-        prod.app_a p
-    WHERE
-        p.market_value_millions > 5
-    ORDER BY
-        p.market_value_millions DESC
-    """
+    # Get the directory of the current file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Load SQL from file
+    sql_file_path = os.path.join(current_dir, "derived_a.sql")
+    query = load_sql_file(sql_file_path)
 
     # Execute the query and create a table from the results
     conn.execute(f"""

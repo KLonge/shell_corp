@@ -8,16 +8,11 @@ SELECT
     p.current_club,
     p.market_value_millions,
     p.contract_end_date,
-    'Unknown' AS league,-- DEFAULT VALUE
-    WHEN
-    JOIN fails 'Unknown' AS country -- DEFAULT VALUE
-    WHEN
-    JOIN fails
+    'Unknown' AS league,
+    'Unknown' AS country
 FROM
     prod.app_a p
 WHERE
     p.market_value_millions > 5 -- lowered threshold
-FROM
-    10 TO 5
 ORDER BY
     p.market_value_millions DESC

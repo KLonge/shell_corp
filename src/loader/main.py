@@ -28,6 +28,9 @@ def generate_app_a_data(
         Chunks of player data dictionaries
     """
     try:
+        # Set fixed seed for deterministic data generation
+        random.seed(42)
+
         print(f"Generating {num_records} records for players...")
 
         positions = ["Goalkeeper", "Defender", "Midfielder", "Forward"]
@@ -133,6 +136,9 @@ def generate_app_b_data(
         Chunks of club data dictionaries
     """
     try:
+        # Set fixed seed for deterministic data generation
+        random.seed(43)
+
         print(f"Generating {num_records} records for clubs...")
 
         leagues = {
@@ -223,6 +229,9 @@ def generate_app_c_data(
         Chunks of transfer data dictionaries
     """
     try:
+        # Set fixed seed for deterministic data generation
+        random.seed(44)
+
         print(f"Generating {num_records} records for transfers...")
 
         transfer_types = [
