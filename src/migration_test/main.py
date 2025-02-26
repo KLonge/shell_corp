@@ -20,8 +20,8 @@ def main(folder_path: str) -> None:
     # Define the tables to test with their primary keys
     tables_to_test = {
         "derived_a": ["player_id", "contract_end_date"],
-        # "derived_b": ["user_id", "event_date"],
-        # "derived_c": ["session_id"],
+        "derived_b": ["transfer_id"],
+        "derived_c": ["insight_id"],
     }
 
     total_model_count = len(tables_to_test)

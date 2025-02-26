@@ -18,6 +18,7 @@ class ComparisonResult(BaseModel):
         failed_columns: Dictionary mapping column names to the number of failures
         value_tolerance: Tolerance used for numeric comparisons
         row_tolerance: Maximum percentage of rows that can fail
+        sample_failed_rows: Sample of rows that failed the comparison (if any)
     """
 
     model_name: str | None = None
@@ -28,3 +29,4 @@ class ComparisonResult(BaseModel):
     failed_columns: dict[str, int] | None
     value_tolerance: float
     row_tolerance: float
+    sample_failed_rows: list[dict] | None = None

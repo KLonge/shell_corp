@@ -1,2 +1,3 @@
 folder_path,model_name,passed,failed_row_percentage,total_rows,failed_columns,value_tolerance,row_tolerance
 migration_test_results,derived_a,True,0.0,89,{},0.2,0.01
+migration_test_results,derived_b,True,0.0,5,{},0.2,0.01

@@ -1,10 +1,7 @@
 import datetime as dt
 
-import pandas as pd
-
 from src.clients.duckdb import DuckDBClient
 from src.migration_test.models import ComparisonResult
-
 
 
 def compare_duckdb_tables(
@@ -177,6 +174,73 @@ def compare_duckdb_tables(
     # Determine if the comparison passed
     passed = failed_row_perc <= row_tolerance
 
+    # If there are failed rows, get a sample of them
+    sample_failed_rows = None
+    if failed_rows > 0:
+        # Query to get sample failed rows
+        sample_query = f"""
+        WITH base_keys AS (
+            SELECT {select_clause}
+            FROM {table1_name} t1
+            INNER JOIN {table2_name} t2
+            ON {pk_join_condition}
+        ),
+        test_data AS (
+            SELECT *,
+            CASE WHEN {" AND ".join([f"({comp})" for comp in column_comparisons.values()])}
+                THEN TRUE ELSE FALSE END AS row_passed,
+            {", ".join([f"CASE WHEN NOT ({comp}) THEN FALSE ELSE TRUE END AS {col}_passed" for col, comp in column_comparisons.items()])}
+            FROM base_keys
+        )
+        SELECT 
+            {", ".join([f"{pk}" for pk in primary_key])},
+            {", ".join([f"t1_{col} AS {col}_source" for col in valid_columns])},
+            {", ".join([f"t2_{col} AS {col}_target" for col in valid_columns])},
+            {", ".join([f"NOT {col}_passed AS {col}_failed" for col in valid_columns])},
+            row_passed
+        FROM test_data
+        WHERE NOT row_passed
+        ORDER BY {primary_key[0]}
+        LIMIT 10
+        """
+
+        print("Sample query for failed rows:")
+        print(sample_query)
+
+        sample_failed_rows = duckdb_client.query(sample_query).to_dict(orient="records")
+        print(f"Found {len(sample_failed_rows)} sample failed rows")
+
+        # Process the sample rows to make them more readable
+        for row in sample_failed_rows:
+            # Add a list of failed columns for easier reference
+            row["failed_columns"] = [
+                col for col in valid_columns if row.get(f"{col}_failed", False)
+            ]
+
+            # Add a dictionary of value differences for failed columns
+            row["value_differences"] = {}
+            for col in row["failed_columns"]:
+                source_val = row.get(f"{col}_source")
+                target_val = row.get(f"{col}_target")
+
+                # Add additional information for numeric differences
+                diff_info = {}
+                if isinstance(source_val, (int, float)) and isinstance(
+                    target_val, (int, float)
+                ):
+                    diff_info["diff"] = target_val - source_val
+                    diff_info["diff_pct"] = (
+                        (diff_info["diff"] / source_val * 100)
+                        if source_val != 0
+                        else float("inf")
+                    )
+
+                row["value_differences"][col] = {
+                    "source": source_val,
+                    "target": target_val,
+                    **diff_info,
+                }
+
     # Create and return the comparison result
     return ComparisonResult(
         passed=passed,
@@ -186,4 +250,5 @@ def compare_duckdb_tables(
         failed_columns=failed_columns,
         value_tolerance=value_tolerance,
         row_tolerance=row_tolerance,
+        sample_failed_rows=sample_failed_rows,
     )
