@@ -337,7 +337,7 @@ def main() -> None:
     new_transferroom_pipeline: dlt.Pipeline = dlt.pipeline(
         pipeline_name="transferroom",
         destination=dlt.destinations.duckdb("database/new/transferroom.duckdb"),
-        dataset_name="legacy_prod",  # calling this legacy_prod as it will be the legacy schema in the new database (and it's how we will do the testing between the two)
+        dataset_name="raw",  # calling this raw as it will be the raw schema in the new database (and it's how we will do the testing between the two)
     )
 
     # Run the pipeline with all three generator resources

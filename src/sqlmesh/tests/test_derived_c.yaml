@@ -1,0 +1,171 @@
+test_given_player_and_transfer_data_when_generating_insights_then_creates_correct_dimensions:
+  model: prod.derived_c
+  inputs:
+    prod.derived_a:
+      rows:
+        - player_id: "P0001"
+          name: "Player 1"
+          position: "Forward"
+          age: 25
+          nationality: "England"
+          current_club: "Manchester United"
+          market_value_millions: 50.0
+          contract_end_date: '2025-01-01'
+          league: "Premier League"
+          country: "England"
+        - player_id: "P0002"
+          name: "Player 2"
+          position: "Midfielder"
+          age: 28
+          nationality: "Spain"
+          current_club: "Barcelona"
+          market_value_millions: 40.0
+          contract_end_date: '2024-06-30'
+          league: "La Liga"
+          country: "Spain"
+        - player_id: "P0003"
+          name: "Player 3"
+          position: "Defender"
+          age: 22
+          nationality: "France"
+          current_club: "PSG"
+          market_value_millions: 30.0
+          contract_end_date: '2026-06-30'
+          league: "Ligue 1"
+          country: "France"
+    prod.derived_b:
+      rows:
+        - transfer_id: "T00001"
+          player_id: "P0001"
+          player_name: "Player 1"
+          position: "Forward"
+          nationality: "England"
+          market_value_millions: 50.0
+          selling_club_id: "C001"
+          selling_club: "Real Madrid"
+          selling_league: "La Liga"
+          buying_club_id: "C002"
+          buying_club: "Manchester United"
+          buying_league: "Premier League"
+          transfer_fee_millions: 60.0
+          transfer_type: "Permanent"
+          transfer_window: "Summer"
+          transfer_date: '2023-07-15'
+          contract_length_years: 5
+          salary_thousands_weekly: 200.0
+        - transfer_id: "T00002"
+          player_id: "P0002"
+          player_name: "Player 2"
+          position: "Midfielder"
+          nationality: "Spain"
+          market_value_millions: 40.0
+          selling_club_id: "C003"
+          selling_club: "Chelsea"
+          selling_league: "Premier League"
+          buying_club_id: "C004"
+          buying_club: "Barcelona"
+          buying_league: "La Liga"
+          transfer_fee_millions: 45.0
+          transfer_type: "Permanent"
+          transfer_window: "Summer"
+          transfer_date: '2023-07-20'
+          contract_length_years: 4
+          salary_thousands_weekly: 180.0
+  outputs:
+    query:
+      rows:
+        - primary_dimension: "position"
+          dimension_value: "Forward"
+          insight_type: "Position Analysis"
+        - primary_dimension: "position"
+          dimension_value: "Midfielder"
+          insight_type: "Position Analysis"
+        - primary_dimension: "position"
+          dimension_value: "Defender"
+          insight_type: "Position Analysis"
+        - primary_dimension: "league"
+          dimension_value: "Premier League"
+          insight_type: "League Analysis"
+        - primary_dimension: "league"
+          dimension_value: "La Liga"
+          insight_type: "League Analysis"
+  vars:
+    execution_time: '2024-01-01'
+
+test_given_transfer_data_when_calculating_metrics_then_computes_correct_values:
+  model: prod.derived_c
+  inputs:
+    prod.derived_a:
+      rows:
+        - player_id: "P0001"
+          name: "Player 1"
+          position: "Forward"
+          age: 25
+          nationality: "England"
+          current_club: "Manchester United"
+          market_value_millions: 50.0
+          contract_end_date: '2025-01-01'
+          league: "Premier League"
+          country: "England"
+        - player_id: "P0002"
+          name: "Player 2"
+          position: "Forward"
+          age: 28
+          nationality: "Spain"
+          current_club: "Barcelona"
+          market_value_millions: 40.0
+          contract_end_date: '2024-06-30'
+          league: "La Liga"
+          country: "Spain"
+    prod.derived_b:
+      rows:
+        - transfer_id: "T00001"
+          player_id: "P0001"
+          player_name: "Player 1"
+          position: "Forward"
+          nationality: "England"
+          market_value_millions: 50.0
+          selling_club_id: "C001"
+          selling_club: "Real Madrid"
+          selling_league: "La Liga"
+          buying_club_id: "C002"
+          buying_club: "Manchester United"
+          buying_league: "Premier League"
+          transfer_fee_millions: 60.0
+          transfer_type: "Permanent"
+          transfer_window: "Summer"
+          transfer_date: '2023-07-15'
+          contract_length_years: 5
+          salary_thousands_weekly: 200.0
+        - transfer_id: "T00002"
+          player_id: "P0002"
+          player_name: "Player 2"
+          position: "Forward"
+          nationality: "Spain"
+          market_value_millions: 40.0
+          selling_club_id: "C003"
+          selling_club: "Chelsea"
+          selling_league: "Premier League"
+          buying_club_id: "C004"
+          buying_club: "Barcelona"
+          buying_league: "La Liga"
+          transfer_fee_millions: 40.0
+          transfer_type: "Permanent"
+          transfer_window: "Summer"
+          transfer_date: '2023-07-20'
+          contract_length_years: 4
+          salary_thousands_weekly: 180.0
+  outputs:
+    ctes:
+      position_metrics:
+        rows:
+          - position: "Forward"
+            avg_fee: 50.0
+            avg_value: 45.0
+            value_to_fee_ratio: 0.9
+    query:
+      rows:
+        - insight_type: "Position Analysis"
+          dimension_value: "Forward"
+  vars:
+    execution_time: '2024-01-01' 

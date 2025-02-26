@@ -3,6 +3,26 @@ model (
     kind full,
     dialect duckdb,
     description "High-value transfers - migrated from legacy derived table B",
+    COLUMNS (
+        transfer_id VARCHAR,
+        player_id VARCHAR,
+        player_name VARCHAR,
+        POSITION VARCHAR,
+        nationality VARCHAR,
+        market_value_millions DOUBLE,
+        selling_club_id VARCHAR,
+        selling_club VARCHAR,
+        selling_league VARCHAR,
+        buying_club_id VARCHAR,
+        buying_club VARCHAR,
+        buying_league VARCHAR,
+        transfer_fee_millions DOUBLE,
+        transfer_type VARCHAR,
+        transfer_window VARCHAR,
+        transfer_date DATE,
+        contract_length_years DOUBLE,
+        salary_thousands_weekly DOUBLE
+    ),
     audits (
         not_null(
             COLUMNS:= (
@@ -17,9 +37,8 @@ model (
             threshold:= 1
         )
     )
-);-- this IS A migration OF THE dynamic SQL approach
-FROM
-    THE legacy system WITH player_clubs AS (
+);
+WITH player_clubs AS (
         SELECT
             p.player_id,
             p.name AS player_name,
@@ -31,8 +50,8 @@ FROM
             C.league,
             C.country
         FROM
-            legacy_prod.app_a p
-            LEFT JOIN legacy_prod.app_b C
+            raw.app_a p
+            LEFT JOIN raw.app_b C
             ON p.current_club = C.name
     )
 SELECT
@@ -55,12 +74,12 @@ SELECT
     t.contract_length_years,
     t.salary_thousands_weekly
 FROM
-    legacy_prod.app_c t
+    raw.app_c t
     LEFT JOIN player_clubs p
     ON t.player_id = p.player_id
-    LEFT JOIN legacy_prod.app_b sell
+    LEFT JOIN raw.app_b sell
     ON t.selling_club_id = sell.club_id
-    LEFT JOIN legacy_prod.app_b buy
+    LEFT JOIN raw.app_b buy
     ON t.buying_club_id = buy.club_id
 WHERE
     t.transfer_fee_millions >= 5.0

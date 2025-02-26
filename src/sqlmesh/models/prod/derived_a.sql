@@ -3,6 +3,18 @@ model (
     kind full,
     dialect duckdb,
     description "Top players by market value - migrated from legacy derived table A",
+    COLUMNS (
+        player_id VARCHAR,
+        NAME VARCHAR,
+        POSITION VARCHAR,
+        age INTEGER,
+        nationality VARCHAR,
+        current_club VARCHAR,
+        market_value_millions DOUBLE,
+        contract_end_date DATE,
+        league VARCHAR,
+        country VARCHAR
+    ),
     audits (
         not_null(
             COLUMNS:= (
@@ -32,7 +44,7 @@ SELECT
     'Unknown' AS league,
     'Unknown' AS country
 FROM
-    legacy_prod.app_a p
+    raw.app_a p
 WHERE
     p.market_value_millions > 5
 ORDER BY

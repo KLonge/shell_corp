@@ -17,8 +17,17 @@ from sqlmesh.core.model import PythonModel, model
         "prod.derived_a",
         "prod.derived_b",
     ],
+    columns={
+        "insight_id": "VARCHAR",
+        "insight_type": "VARCHAR",
+        "insight_name": "VARCHAR",
+        "primary_dimension": "VARCHAR",
+        "dimension_value": "VARCHAR",
+        "metrics_json": "VARCHAR",
+        "created_at": "TIMESTAMP",
+    },
 )
-class DerivedTableC(PythonModel):
+class DerivedTableC(PythonModel):  # type: ignore
     """SQLMesh Python model for derived table C with pandas transformations.
 
     This model uses pandas to perform complex transformations on data from
