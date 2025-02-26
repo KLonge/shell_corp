@@ -87,12 +87,10 @@ WHERE
         'Permanent',
         'Loan with Option to Buy'
     )
-    AND CAST(
-        t.transfer_date AS DATE
-    ) >= '2022-01-01'
-    AND CAST(
-        t.transfer_date AS DATE
-    ) <= CURRENT_DATE
+    AND t.transfer_date :: DATE BETWEEN (
+        CURRENT_DATE - INTERVAL '2 years'
+    )
+    AND CURRENT_DATE
     AND t.status = 'Completed'
 ORDER BY
     t.transfer_fee_millions DESC

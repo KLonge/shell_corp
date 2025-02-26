@@ -1,5 +1,7 @@
 import datetime as dt
 
+import pandas as pd
+
 from src.clients.duckdb import DuckDBClient
 from src.migration_test.models import ComparisonResult
 
@@ -157,19 +159,128 @@ def compare_duckdb_tables(
         print(f"Table 2 ({table2_name}): {total_rows_table2:,} rows")
         print(f"Difference: {row_diff:,} rows ({row_diff_perc:.2%})")
 
+        # Find rows that exist in one table but not the other
+        pk_columns_str = ", ".join(primary_key)
+
+        # Create separate queries for each direction to avoid UNION ALL issues with different column structures
+        missing_from_table2_query = f"""
+        WITH table1_keys AS (
+            SELECT {pk_columns_str} FROM {table1_name}
+        ),
+        table2_keys AS (
+            SELECT {pk_columns_str} FROM {table2_name}
+        )
+        SELECT t1.* 
+        FROM {table1_name} t1
+        WHERE NOT EXISTS (
+            SELECT 1 FROM table2_keys t2
+            WHERE {" AND ".join([f"t1.{pk} = t2.{pk}" for pk in primary_key])}
+        )
+        LIMIT 5
+        """
+
+        missing_from_table1_query = f"""
+        WITH table1_keys AS (
+            SELECT {pk_columns_str} FROM {table1_name}
+        ),
+        table2_keys AS (
+            SELECT {pk_columns_str} FROM {table2_name}
+        )
+        SELECT t2.* 
+        FROM {table2_name} t2
+        WHERE NOT EXISTS (
+            SELECT 1 FROM table1_keys t1
+            WHERE {" AND ".join([f"t2.{pk} = t1.{pk}" for pk in primary_key])}
+        )
+        LIMIT 5
+        """
+
+        # Execute the queries separately
+        try:
+            missing_from_table2 = duckdb_client.query(missing_from_table2_query)
+            print(
+                f"\n🔍 Rows in {table1_name} but missing from {table2_name} (up to 5):"
+            )
+            if missing_from_table2.empty:
+                print("  None found")
+            else:
+                for idx, row in missing_from_table2.iterrows():
+                    print(f"\n  --- Missing Row {idx + 1} ---")
+                    # Print primary key values prominently
+                    pk_values = ", ".join([f"{pk}={row[pk]}" for pk in primary_key])
+                    print(f"  Primary Key: {pk_values}")
+
+                    # Print all non-primary key columns
+                    print("  Column values:")
+                    non_pk_cols = [col for col in row.index if col not in primary_key]
+                    for col in non_pk_cols:
+                        value = row[col]
+                        if pd.isna(value):
+                            print(f"    {col}: NULL")
+                        else:
+                            print(f"    {col}: {value}")
+        except Exception as e:
+            print(f"  Error querying missing rows from {table2_name}: {e!s}")
+            missing_from_table2 = None
+
+        try:
+            missing_from_table1 = duckdb_client.query(missing_from_table1_query)
+            print(
+                f"\n🔍 Rows in {table2_name} but missing from {table1_name} (up to 5):"
+            )
+            if missing_from_table1.empty:
+                print("  None found")
+            else:
+                for idx, row in missing_from_table1.iterrows():
+                    print(f"\n  --- Missing Row {idx + 1} ---")
+                    # Print primary key values prominently
+                    pk_values = ", ".join([f"{pk}={row[pk]}" for pk in primary_key])
+                    print(f"  Primary Key: {pk_values}")
+
+                    # Print all non-primary key columns
+                    print("  Column values:")
+                    non_pk_cols = [col for col in row.index if col not in primary_key]
+                    for col in non_pk_cols:
+                        value = row[col]
+                        if pd.isna(value):
+                            print(f"    {col}: NULL")
+                        else:
+                            print(f"    {col}: {value}")
+        except Exception as e:
+            print(f"  Error querying missing rows from {table1_name}: {e!s}")
+            missing_from_table1 = None
+
         if row_diff_perc > row_tolerance:
             print(
                 f"❌ Row count difference ({row_diff_perc:.2%}) exceeds tolerance ({row_tolerance:.2%})"
             )
+
+            # Prepare sample rows for the result
+            sample_failed_rows = []
+
+            # Add rows from missing_from_table2 if available
+            if missing_from_table2 is not None and not missing_from_table2.empty:
+                for _, row in missing_from_table2.iterrows():
+                    row_dict = row.to_dict()
+                    row_dict["diff_type"] = "missing_from_table2"
+                    sample_failed_rows.append(row_dict)
+
+            # Add rows from missing_from_table1 if available
+            if missing_from_table1 is not None and not missing_from_table1.empty:
+                for _, row in missing_from_table1.iterrows():
+                    row_dict = row.to_dict()
+                    row_dict["diff_type"] = "missing_from_table1"
+                    sample_failed_rows.append(row_dict)
+
             return ComparisonResult(
                 passed=False,
-                comparison_sql="",
+                comparison_sql=f"-- Missing from table2 query:\n{missing_from_table2_query}\n\n-- Missing from table1 query:\n{missing_from_table1_query}",
                 failed_row_perc=row_diff_perc,
                 total_rows=max(total_rows_table1, total_rows_table2),
                 failed_columns={},
                 value_tolerance=value_tolerance,
                 row_tolerance=row_tolerance,
-                sample_failed_rows=None,
+                sample_failed_rows=sample_failed_rows if sample_failed_rows else None,
             )
         else:
             print(
