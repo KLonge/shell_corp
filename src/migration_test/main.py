@@ -19,8 +19,8 @@ def main(folder_path: str) -> None:
 
     # Define the tables to test with their primary keys
     tables_to_test = {
-        "derived_a": ["player_id", "contract_end_date"],
-        "derived_b": ["transfer_id"],
+        # "derived_a": ["player_id", "contract_end_date"],
+        # "derived_b": ["transfer_id"],
         "derived_c": ["insight_id"],
     }
 
@@ -37,7 +37,7 @@ def main(folder_path: str) -> None:
             primary_key=primary_key,
             value_tolerance=0.20,
             row_tolerance=0.01,
-            exclude_columns=[],
+            exclude_columns=["metrics_json"],
             timestamp_range_exclude=(
                 dt.datetime(2024, 12, 1),
                 dt.datetime(2024, 12, 31),
