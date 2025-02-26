@@ -35,6 +35,8 @@ def compare_duckdb_tables(
     Returns:
         ComparisonResult: Object containing comparison results
     """
+    print(f"\nCOMPARING TABLES: {table1_name} AND {table2_name}")
+
     # Get metadata for both tables
     meta1_query = f"""
     SELECT column_name, data_type
@@ -66,6 +68,10 @@ def compare_duckdb_tables(
         all_columns = all_columns - set(exclude_columns)
 
     valid_columns = list(all_columns)
+
+    print(f"\nColumns to compare: {len(valid_columns)}")
+    if exclude_columns:
+        print(f"Columns excluded: {len(exclude_columns)}")
 
     # Build column comparisons
     column_comparisons = {}
@@ -131,6 +137,45 @@ def compare_duckdb_tables(
 
     select_clause = ", ".join(select_columns)
 
+    # Get total row counts for both tables
+    total_rows_query = f"""
+    SELECT 
+        (SELECT COUNT(*) FROM {table1_name}) as table1_count,
+        (SELECT COUNT(*) FROM {table2_name}) as table2_count
+    """
+    row_counts = duckdb_client.query(total_rows_query).iloc[0]
+    total_rows_table1 = int(row_counts["table1_count"])
+    total_rows_table2 = int(row_counts["table2_count"])
+
+    # Check for row count mismatches
+    if total_rows_table1 != total_rows_table2:
+        row_diff = abs(total_rows_table1 - total_rows_table2)
+        row_diff_perc = row_diff / max(total_rows_table1, total_rows_table2)
+
+        print("\n⚠️ Row count mismatch between tables:")
+        print(f"Table 1 ({table1_name}): {total_rows_table1:,} rows")
+        print(f"Table 2 ({table2_name}): {total_rows_table2:,} rows")
+        print(f"Difference: {row_diff:,} rows ({row_diff_perc:.2%})")
+
+        if row_diff_perc > row_tolerance:
+            print(
+                f"❌ Row count difference ({row_diff_perc:.2%}) exceeds tolerance ({row_tolerance:.2%})"
+            )
+            return ComparisonResult(
+                passed=False,
+                comparison_sql="",
+                failed_row_perc=row_diff_perc,
+                total_rows=max(total_rows_table1, total_rows_table2),
+                failed_columns={},
+                value_tolerance=value_tolerance,
+                row_tolerance=row_tolerance,
+                sample_failed_rows=None,
+            )
+        else:
+            print(
+                f"✅ Row count difference ({row_diff_perc:.2%}) within tolerance ({row_tolerance:.2%})"
+            )
+
     # Build the main comparison query
     comparison_query = f"""
     WITH base_keys AS (
@@ -171,6 +216,26 @@ def compare_duckdb_tables(
     # Determine if the comparison passed
     passed = failed_row_perc <= row_tolerance
 
+    # Print comparison results
+    print("\nComparison Results:")
+    print(f"Total rows compared: {total_rows:,}")
+    print(f"Failed rows: {failed_rows:,} ({failed_row_perc:.2%})")
+    print(f"Row tolerance: {row_tolerance:.2%}")
+
+    if passed:
+        print(
+            f"\n✅ Differences ({failed_row_perc:.2%}) within acceptable row tolerance ({row_tolerance:.2%})"
+        )
+    else:
+        print(
+            f"\n❌ Differences ({failed_row_perc:.2%}) exceed row tolerance ({row_tolerance:.2%})"
+        )
+
+    if failed_columns:
+        print("\nColumns with differences:")
+        for col, count in failed_columns.items():
+            print(f"  - {col}: {count:,} rows ({count / total_rows:.2%})")
+
     # If there are failed rows, get a sample of them
     sample_failed_rows = None
     if failed_rows > 0:
@@ -201,42 +266,58 @@ def compare_duckdb_tables(
         LIMIT 5
         """
 
-        print("Sample query for failed rows:")
+        print("\nSample query for failed rows:")
         print(sample_query)
 
         sample_failed_rows = duckdb_client.query(sample_query).to_dict(orient="records")
         print(f"Found {len(sample_failed_rows)} sample failed rows")
 
-        # Process the sample rows to make them more readable
-        for row in sample_failed_rows:
-            # Add a list of failed columns for easier reference
-            row["failed_columns"] = [
-                col for col in valid_columns if row.get(f"{col}_failed", False)
-            ]
+        # Print sample of failed rows
+        if sample_failed_rows:
+            print("\nShowing sample differences:")
+            for i, row in enumerate(sample_failed_rows):
+                print(f"\n--- Sample {i + 1} ---")
+                # Print primary key values
+                pk_values = ", ".join([f"{pk}={row.get(pk)}" for pk in primary_key])
+                print(f"Primary Key: {pk_values}")
 
-            # Add a dictionary of value differences for failed columns
-            row["value_differences"] = {}
-            for col in row["failed_columns"]:
-                source_val = row.get(f"{col}_source")
-                target_val = row.get(f"{col}_target")
+                # Add a list of failed columns for easier reference
+                row["failed_columns"] = [
+                    col for col in valid_columns if row.get(f"{col}_failed", False)
+                ]
 
-                # Add additional information for numeric differences
-                diff_info = {}
-                if isinstance(source_val, (int, float)) and isinstance(
-                    target_val, (int, float)
-                ):
-                    diff_info["diff"] = target_val - source_val
-                    diff_info["diff_pct"] = (
-                        (diff_info["diff"] / source_val * 100)
-                        if source_val != 0
-                        else float("inf")
-                    )
+                print("Failed columns:")
+                for col in row["failed_columns"]:
+                    source_val = row.get(f"{col}_source")
+                    target_val = row.get(f"{col}_target")
+                    print(f"  - {col}: {source_val} vs {target_val}")
 
-                row["value_differences"][col] = {
-                    "source": source_val,
-                    "target": target_val,
-                    **diff_info,
-                }
+                # Add a dictionary of value differences for failed columns
+                row["value_differences"] = {}
+                for col in row["failed_columns"]:
+                    source_val = row.get(f"{col}_source")
+                    target_val = row.get(f"{col}_target")
+
+                    # Add additional information for numeric differences
+                    diff_info = {}
+                    if isinstance(source_val, (int, float)) and isinstance(
+                        target_val, (int, float)
+                    ):
+                        diff_info["diff"] = target_val - source_val
+                        diff_info["diff_pct"] = (
+                            (diff_info["diff"] / source_val * 100)
+                            if source_val != 0
+                            else float("inf")
+                        )
+                        print(
+                            f"    Numeric diff: {diff_info['diff']} ({diff_info['diff_pct']:.2f}%)"
+                        )
+
+                    row["value_differences"][col] = {
+                        "source": source_val,
+                        "target": target_val,
+                        **diff_info,
+                    }
 
     # Create and return the comparison result
     return ComparisonResult(
