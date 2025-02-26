@@ -152,9 +152,6 @@ def compare_duckdb_tables(
     FROM test_data
     """
 
-    # Execute the comparison query
-    print(comparison_query)
-
     result = duckdb_client.query(comparison_query)
 
     # Extract results
@@ -201,7 +198,7 @@ def compare_duckdb_tables(
         FROM test_data
         WHERE NOT row_passed
         ORDER BY {primary_key[0]}
-        LIMIT 10
+        LIMIT 5
         """
 
         print("Sample query for failed rows:")

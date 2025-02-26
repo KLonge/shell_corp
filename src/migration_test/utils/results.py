@@ -1,4 +1,6 @@
+import json
 import os
+from typing import Any
 
 import pandas as pd
 
@@ -25,6 +27,13 @@ def comparison_results_to_csv(
             - Path to the complete results CSV file
             - Path to the failures CSV file (None if no failures)
     """
+
+    # Custom JSON encoder to handle pandas Timestamp objects
+    def json_serializer(obj: Any) -> Any:
+        if hasattr(obj, "isoformat"):  # This will handle datetime and Timestamp objects
+            return obj.isoformat()
+        raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
     results_df = pd.DataFrame(
         [
             {
@@ -36,6 +45,11 @@ def comparison_results_to_csv(
                 "failed_columns": str(result.failed_columns),
                 "value_tolerance": result.value_tolerance,
                 "row_tolerance": result.row_tolerance,
+                "sample_failed_rows": json.dumps(
+                    result.sample_failed_rows, default=json_serializer
+                )
+                if result.sample_failed_rows
+                else None,
             }
             for result in comparison_results
         ]
