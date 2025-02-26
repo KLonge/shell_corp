@@ -18,8 +18,12 @@ class DuckDBClient:
         s3_access (bool): Whether AWS credentials have been configured for S3 access.
     """
 
-    def __init__(self) -> None:
-        self._connection: DuckDBPyConnection | None = None
+    def __init__(self, database_path: str | Path | None = None) -> None:
+        self._connection = (
+            duckdb.connect(database=str(database_path))
+            if database_path != ":memory:"
+            else duckdb.connect()
+        )
 
     def get_connection(
         self, new_connection: bool = False, database_path: str | Path | None = None
@@ -127,4 +131,3 @@ class DuckDBClient:
         """Close the database connection."""
         if self._connection is not None:
             self._connection.close()
-            self._connection = None
