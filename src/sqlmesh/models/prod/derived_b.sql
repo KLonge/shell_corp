@@ -39,21 +39,21 @@ model (
     )
 );
 WITH player_clubs AS (
-        SELECT
-            p.player_id,
-            p.name AS player_name,
-            p.position,
-            p.nationality,
-            p.market_value_millions,
-            C.club_id,
-            C.name AS club_name,
-            C.league,
-            C.country
-        FROM
-            raw.app_a p
-            LEFT JOIN raw.app_b C
-            ON p.current_club = C.name
-    )
+    SELECT
+        p.player_id,
+        p.name AS player_name,
+        p.position,
+        p.nationality,
+        p.market_value_millions,
+        C.club_id,
+        C.name AS club_name,
+        C.league,
+        C.country
+    FROM
+        raw.app_a p
+        LEFT JOIN raw.app_b C
+        ON p.current_club = C.name
+)
 SELECT
     t.transfer_id,
     t.player_id,
@@ -87,8 +87,12 @@ WHERE
         'Permanent',
         'Loan with Option to Buy'
     )
-    AND t.transfer_date >= '2022-01-01'
-    AND t.transfer_date <= CURRENT_DATE
+    AND CAST(
+        t.transfer_date AS DATE
+    ) >= '2022-01-01'
+    AND CAST(
+        t.transfer_date AS DATE
+    ) <= CURRENT_DATE
     AND t.status = 'Completed'
 ORDER BY
     t.transfer_fee_millions DESC

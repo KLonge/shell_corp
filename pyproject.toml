@@ -12,7 +12,7 @@ dependencies = [
     "patito",
     "polars",
     "pyarrow",
-    "sqlmesh[duckdb]>=0.38.0",
+    "sqlmesh>=0.38.0",
     "soccerdata>=1.0.0",
     "pandas-stubs",
     "types-PyYAML",
