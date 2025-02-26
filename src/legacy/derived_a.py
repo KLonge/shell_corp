@@ -22,7 +22,7 @@ def create_derived_table_a() -> None:
     This function creates a derived table of top players by market value.
     """
     # Connect to the database
-    conn = duckdb.connect("database/transferroom.duckdb")
+    conn = duckdb.connect("database/legacy/transferroom.duckdb")
 
     # Create the derived table
     print("Creating derived table A (top_players_by_value)...")
@@ -41,7 +41,7 @@ def create_derived_table_a() -> None:
         'Unknown' AS league,
         'Unknown' AS country
     FROM
-        football.app_a p
+        prod.app_a p
     WHERE
         p.market_value_millions > 5
     ORDER BY
@@ -50,12 +50,12 @@ def create_derived_table_a() -> None:
 
     # Execute the query and create a table from the results
     conn.execute(f"""
-    CREATE OR REPLACE TABLE football.derived_a AS
+    CREATE OR REPLACE TABLE prod.derived_a AS
     {query}
     """)
 
     # Print the number of rows
-    result = conn.execute("SELECT COUNT(*) FROM football.derived_a").fetchone()
+    result = conn.execute("SELECT COUNT(*) FROM prod.derived_a").fetchone()
     if result is not None:
         print(f"Created derived table A with {result[0]} rows")
     else:

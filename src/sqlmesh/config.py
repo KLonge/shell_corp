@@ -8,7 +8,7 @@ from sqlmesh.core.config import (
 )
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-DB_PATH = os.path.join(PROJECT_ROOT, "database/shell_corp.duckdb")
+DB_PATH = os.path.join(PROJECT_ROOT, "database/new/transferroom.duckdb")
 
 config = Config(
     model_defaults=ModelDefaultsConfig(dialect="duckdb"),

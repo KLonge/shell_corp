@@ -54,9 +54,9 @@ def generate_dynamic_sql(
             c.league,
             c.country
         FROM 
-            football.app_a p
+            prod.app_a p
         LEFT JOIN 
-            football.app_b c ON p.current_club = c.name
+            prod.app_b c ON p.current_club = c.name
     )
     
     SELECT 
@@ -79,13 +79,13 @@ def generate_dynamic_sql(
         t.contract_length_years,
         t.salary_thousands_weekly
     FROM 
-        football.app_c t
+        prod.app_c t
     LEFT JOIN 
         player_clubs p ON t.player_id = p.player_id
     LEFT JOIN 
-        football.app_b sell ON t.selling_club_id = sell.club_id
+        prod.app_b sell ON t.selling_club_id = sell.club_id
     LEFT JOIN 
-        football.app_b buy ON t.buying_club_id = buy.club_id
+        prod.app_b buy ON t.buying_club_id = buy.club_id
     WHERE 
         t.transfer_fee_millions >= {min_transfer_fee}
     """
@@ -132,19 +132,19 @@ def create_derived_table_b(
     )
 
     # Connect to the database
-    conn = duckdb.connect("database/transferroom.duckdb")
+    conn = duckdb.connect("database/legacy/transferroom.duckdb")
 
     # Create the derived table
     print(f"Creating derived table B (high_value_transfers, min fee: {min_fee}m)...")
 
     # Execute the query and create a table from the results
     conn.execute(f"""
-    CREATE OR REPLACE TABLE football.derived_b AS
+    CREATE OR REPLACE TABLE prod.derived_b AS
     {query}
     """)
 
     # Print the number of rows
-    result = conn.execute("SELECT COUNT(*) FROM football.derived_b").fetchone()
+    result = conn.execute("SELECT COUNT(*) FROM prod.derived_b").fetchone()
     if result is not None:
         print(f"Created derived table B with {result[0]} rows")
     else:

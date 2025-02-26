@@ -14,7 +14,7 @@ SELECT
     WHEN
     JOIN fails
 FROM
-    football.app_a p
+    prod.app_a p
 WHERE
     p.market_value_millions > 5 -- lowered threshold
 FROM

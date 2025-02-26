@@ -309,27 +309,46 @@ def generate_app_c_data(
 
 
 def main() -> None:
-    """Main function to load football transfer data into DuckDB tables."""
+    """Main function to load transferroom data into DuckDB tables."""
     # Ensure database directory exists
-    os.makedirs("database", exist_ok=True)
+    os.makedirs("database/legacy", exist_ok=True)
+    os.makedirs("database/new", exist_ok=True)
 
-    print("Starting TransferRoom data pipeline...")
-    # Create pipeline that loads to database/shell_corp.duckdb
-    pipeline: dlt.Pipeline = dlt.pipeline(
+    print("Starting TransferRoom legacy data pipeline...")
+    # Create pipeline that loads to database/legacy/transferroom.duckdb
+    legacy_transferroom_pipeline: dlt.Pipeline = dlt.pipeline(
         pipeline_name="transferroom",
-        destination=dlt.destinations.duckdb("database/transferroom.duckdb"),
-        dataset_name="football",
+        destination=dlt.destinations.duckdb("database/legacy/transferroom.duckdb"),
+        dataset_name="prod",  # going to just presume that the legacy schema is just one big schema called prod where both raw and derived tables are stored
     )
 
     # Run the pipeline with all three generator resources
-    info = pipeline.run(
+    info = legacy_transferroom_pipeline.run(
         [
             generate_app_a_data(num_records=100),
             generate_app_b_data(num_records=100),
             generate_app_c_data(num_records=100),
         ]
     )
-    print(f"Pipeline completed. Load info: {info}")
+    print(f"Legacy TransferRoom pipeline completed. Load info: {info}")
+
+    print("Starting new TransferRoom data pipeline...")
+    # Create pipeline that loads to database/new/transferroom.duckdb
+    new_transferroom_pipeline: dlt.Pipeline = dlt.pipeline(
+        pipeline_name="transferroom",
+        destination=dlt.destinations.duckdb("database/new/transferroom.duckdb"),
+        dataset_name="legacy_prod",  # calling this legacy_prod as it will be the legacy schema in the new database (and it's how we will do the testing between the two)
+    )
+
+    # Run the pipeline with all three generator resources
+    info = new_transferroom_pipeline.run(
+        [
+            generate_app_a_data(num_records=100),
+            generate_app_b_data(num_records=100),
+            generate_app_c_data(num_records=100),
+        ]
+    )
+    print(f"New TransferRoom pipeline completed. Load info: {info}")
 
 
 if __name__ == "__main__":

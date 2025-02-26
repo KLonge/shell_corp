@@ -16,13 +16,13 @@ def fetch_source_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         Tuple of DataFrames (top_players_df, high_value_transfers_df)
     """
     # Connect to the database
-    conn = duckdb.connect("database/transferroom.duckdb")
+    conn = duckdb.connect("database/legacy/transferroom.duckdb")
 
     # Check if the derived tables exist
     tables = conn.execute("""
         SELECT table_name 
         FROM information_schema.tables 
-        WHERE table_schema = 'football' 
+        WHERE table_schema = 'prod' 
         AND table_name IN ('derived_a', 'derived_b')
     """).fetchall()
 
@@ -36,12 +36,12 @@ def fetch_source_data() -> tuple[pd.DataFrame, pd.DataFrame]:
 
     # Fetch data from derived table A
     top_players_df = conn.execute("""
-        SELECT * FROM football.derived_a
+        SELECT * FROM prod.derived_a
     """).fetchdf()
 
     # Fetch data from derived table B
     high_value_transfers_df = conn.execute("""
-        SELECT * FROM football.derived_b
+        SELECT * FROM prod.derived_b
     """).fetchdf()
 
     # Close the connection
@@ -259,19 +259,19 @@ def create_derived_table_c() -> None:
         insights_df = transform_data(top_players_df, high_value_transfers_df)
 
         # Connect to the database
-        conn = duckdb.connect("database/transferroom.duckdb")
+        conn = duckdb.connect("database/legacy/transferroom.duckdb")
 
         # Create the derived table
         print("Creating derived table C (transfer_market_insights)...")
 
         # Create the table from the DataFrame
-        conn.execute("CREATE SCHEMA IF NOT EXISTS football")
-        conn.execute("DROP TABLE IF EXISTS football.derived_c")
+        conn.execute("CREATE SCHEMA IF NOT EXISTS prod")
+        conn.execute("DROP TABLE IF EXISTS prod.derived_c")
         conn.register("temp_insights", insights_df)
-        conn.execute("CREATE TABLE football.derived_c AS SELECT * FROM temp_insights")
+        conn.execute("CREATE TABLE prod.derived_c AS SELECT * FROM temp_insights")
 
         # Print the number of rows
-        result = conn.execute("SELECT COUNT(*) FROM football.derived_c").fetchone()
+        result = conn.execute("SELECT COUNT(*) FROM prod.derived_c").fetchone()
         if result is not None:
             print(f"Created derived table C with {result[0]} rows")
         else:
