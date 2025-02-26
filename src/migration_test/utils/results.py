@@ -1,15 +1,15 @@
-import json
 import os
 
 import pandas as pd
 
-from unmind_data_stack.misc_scripts.snowflake_migration.models import ComparisonResult
+from src.migration_test.models import ComparisonResult
 
 
 def comparison_results_to_csv(
     folder_path: str, comparison_results: list[ComparisonResult]
 ) -> tuple[str, str | None]:
-    """Save comparison results to CSV files.
+    """
+    Save comparison results to CSV files.
 
     Takes a list of comparison results and saves them to CSV files in the
     'comparison_results' directory. Creates two files:
@@ -33,8 +33,7 @@ def comparison_results_to_csv(
                 "passed": result.passed,
                 "failed_row_percentage": result.failed_row_perc * 100,
                 "total_rows": result.total_rows,
-                "failed_columns": json.dumps(result.failed_columns),
-                "comparison_sql": result.comparison_sql,
+                "failed_columns": str(result.failed_columns),
                 "value_tolerance": result.value_tolerance,
                 "row_tolerance": result.row_tolerance,
             }
@@ -42,7 +41,7 @@ def comparison_results_to_csv(
         ]
     )
 
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     results_dir = os.path.join(base_dir, "comparison_results")
     failed_dir = os.path.join(results_dir, "failed")
     os.makedirs(results_dir, exist_ok=True)

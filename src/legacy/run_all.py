@@ -36,7 +36,6 @@ def run_function(name: str, func: Callable[[], None]) -> None:
 
 
 @dlt.resource(
-    name="derived_table",
     write_disposition="replace",
 )
 def load_derived_table(table_name: str) -> Iterator[list[dict[Hashable, Any]]]:
@@ -84,21 +83,24 @@ def load_derived_tables_to_new_db() -> None:
         # Ensure the new database directory exists
         os.makedirs("database/new", exist_ok=True)
 
-        # Create pipeline that loads to database/new/transferroom.duckdb
-        derived_pipeline = dlt.pipeline(
-            pipeline_name="derived_tables",
-            destination=dlt.destinations.duckdb("database/new/transferroom.duckdb"),
-            dataset_name="raw",  # Load into the raw schema in the new database
-        )
-
-        # Load each derived table
+        # Load each derived table with a fresh pipeline instance
         tables = ["derived_a", "derived_b", "derived_c"]
+
         for table in tables:
-            # Create a resource with the table name
-            resource = load_derived_table(table).with_name(table)
+            print(f"Processing {table}...")
+
+            # Create a resource with the table name and explicit write disposition
+            resource = load_derived_table(table_name=table).with_name(table)
+
+            # Create a new pipeline for each table to avoid state issues
+            table_pipeline = dlt.pipeline(
+                pipeline_name=f"derived_table_{table}",
+                destination=dlt.destinations.duckdb("database/new/transferroom.duckdb"),
+                dataset_name="raw",
+            )
 
             # Run the pipeline for this table
-            info = derived_pipeline.run(resource)
+            info = table_pipeline.run(resource)
             print(f"Loaded {table} to new database. Load info: {info}")
 
         end_time = time.time()
