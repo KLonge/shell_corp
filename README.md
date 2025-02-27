@@ -36,19 +36,19 @@ This sample project demonstrates:
 The complete workflow for this demonstration is:
 
 1. **Load Source Data**: Load sample football transfer data into the source database
-2. **Run Legacy Transformations**: Execute the legacy transformation code to create derived tables in the legacy database
+2. **Run Legacy Transformations**: Execute the legacy transformation code to create derived tables in the legacy database (this also pushes the data into the 'new' database that represents Databricks)
 3. **Copy to Target**: Copy the derived tables from the legacy database to the target database (raw schema)
 4. **Run Modern Transformations**: Execute SQLMesh transformations to create the same tables in the target database (prod schema)
-5. **Validate Results**: Run migration tests to compare the legacy and modern transformation results
+5. **Validate Results**: Run migration tests to compare the legacy and modern transformation results 
 
 ## Setup
 
 1. Install UV package manager (if not already installed)
 2. Run `make init` to set up the Python environment
-3. Run `make load-source-data` to load sample data into DuckDB
-4. Run `make run-legacy` to execute legacy transformations and copy results to the target database
-5. Run `make sqlmesh-plan` to execute SQLMesh transformations
-6. Run `make migration-test` to validate the results
+3. Run `make load-source-data` to load sample data into both the legacy DuckDB database and the new DuckDB database
+4. Run `make run-legacy` to execute legacy transformations and copy results to the legacy DuckDB database and the new DuckDB database
+5. Run `make sqlmesh-plan` to execute SQLMesh transformations on the new DuckDB database
+6. Run `make migration-test` to validate the results between the legacy and new DuckDB databases by comparing the 'raw' schema (legacy / copy of app database) with the 'prod' schema (new / databricks database made with SQLMesh)
 
 **NOTE:** If you encounter issues with the `make init` command, you may need to adjust it for your operating system. The Makefile includes Windows and Mac-specific paths.
 
