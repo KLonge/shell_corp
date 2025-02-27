@@ -37,7 +37,7 @@ def main(folder_path: str) -> None:
             primary_key=primary_key,
             value_tolerance=0.01,
             row_tolerance=0.01,
-            exclude_columns=["metrics_json", "_dlt_load_id", "_dlt_id"],
+            exclude_columns=["metrics_json", "_dlt_load_id", "_dlt_id", "created_at"],
             trim_strings=True,
         )
         comparison_result.model_name = table_name

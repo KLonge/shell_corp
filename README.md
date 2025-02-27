@@ -1,39 +1,72 @@
-# Shell Corp Take Home 
+# TransferRoom Data Migration Example
 
-This repository contains the PDF and small code sample (rough draft) for my submission to the Shell Corp Take Home assignment.
+This repository contains a proof-of-concept demonstration for TransferRoom's migration from SQL Server on Azure to Databricks. It showcases a modern data engineering approach using DuckDB (as a stand-in for the actual databases), DLT for data loading, and SQLMesh for transformation management.
 
-**NOTE:** I have called this shell corp take home (rather than the actual company name) so that it's less likely that other potential candidates in the future find this by accident (especially if the intent is to reuse this take home assignment for new hires in the future). Virgin asked me to do something similar when I interviewed with them some years ago. I am guessing that some people would look for answers to take home assignments online during active interview processes.
+## Architecture Overview
 
-## Architecture
+This repository demonstrates a migration path from the current architecture where analytics are performed directly on the production SQL Server database to a more scalable architecture using Databricks for analytics workloads.
 
-The architecture is described in the PDF `proposal.pdf`. This contains images of the current and proposed architecture diagrams. There is also a description of the current data pipeline and proposed changes. Images can be found separately in the `diagrams` folder (`.png` and `.svg` versions).
+- **Current State**: Analytics queries run directly against the production SQL Server database on Azure
+- **Target State**: Analytics workloads moved to Databricks, with data synchronized from the production database
 
-## Data Pipeline (Basic Example)
+In this demo:
+- `database/legacy/transferroom.duckdb` represents the SQL Server on Azure (production database)
+- `database/new/transferroom.duckdb` represents Databricks (analytics platform)
 
-A sample project demonstrating the integration of DuckDB, DLT, and SQLMesh. 
-DuckDB is used as the data warehouse, DLT loads and validates dummy (semi-real) football transfer data, and SQLMesh handles data transformations with built-in testing and validation.
+## Migration Approach
 
-I have skipped the steps regarding converting the CDC logs to tables representing their active state as it would probably take too long to do in the time frame. I will happily explain it in the interview though.
+The migration follows these key steps:
+
+1. **Data Replication**: Copy raw data from SQL Server to Databricks (represented by copying data to the `raw` schema)
+2. **Transformation**: Rebuild analytics models in Databricks using SQLMesh
+3. **Validation**: Use the migration testing framework to verify data consistency between source and target systems
+4. **Cutover**: Once validation passes, redirect analytics queries to the new platform
+
+## Data Pipeline Example
+
+This sample project demonstrates:
+
+1. **Data Loading**: Using DLT to load and validate football transfer data
+2. **Legacy Processing**: Running the existing legacy transformation code to create derived tables (also pushing them into the 'new' database that represents Databricks)
+3. **Modern Transformation**: Using SQLMesh to create analytics models in a version-controlled, testable way
+4. **Validation**: Using the migration test framework to compare results between systems
+
+## Complete Workflow
+
+The complete workflow for this demonstration is:
+
+1. **Load Source Data**: Load sample football transfer data into the source database
+2. **Run Legacy Transformations**: Execute the legacy transformation code to create derived tables in the legacy database
+3. **Copy to Target**: Copy the derived tables from the legacy database to the target database (raw schema)
+4. **Run Modern Transformations**: Execute SQLMesh transformations to create the same tables in the target database (prod schema)
+5. **Validate Results**: Run migration tests to compare the legacy and modern transformation results
 
 ## Setup
 
 1. Install UV package manager (if not already installed)
 2. Run `make init` to set up the Python environment
-3. Run `make dlt` to load sample data into DuckDB
-4. Run `make sqlmesh-plan` to execute SQLMesh transformations
+3. Run `make load-source-data` to load sample data into DuckDB
+4. Run `make run-legacy` to execute legacy transformations and copy results to the target database
+5. Run `make sqlmesh-plan` to execute SQLMesh transformations
+6. Run `make migration-test` to validate the results
 
-**NOTE:** Don't be surprised if the `make init` command doesn't work. The original version of the Makefile was for Mac but I had to make it work for Windows which caused some hiccups.
+**NOTE:** If you encounter issues with the `make init` command, you may need to adjust it for your operating system. The Makefile includes Windows and Mac-specific paths.
 
 ## Project Structure
 
-- `database/`: Contains the DuckDB database file
+- `database/`: Contains the DuckDB database files
+  - `legacy/`: Represents SQL Server on Azure (production database)
+  - `new/`: Represents Databricks (analytics platform)
 - `src/`
   - `loader/`: DLT scripts for loading data into DuckDB
+  - `legacy/`: Legacy transformation code that runs on the source database
+    - `derived_a.py`, `derived_b.py`, `derived_c.py`: Legacy transformation implementations
+    - `run_all.py`: Script to run all legacy transformations and copy results to the target database
   - `sqlmesh/`: SQLMesh configuration and models
-    - `audits/`: SQLMesh audits
+    - `audits/`: SQLMesh audits for data quality
     - `models/`: SQLMesh transformation models
-    - `tests/`: SQLMesh tests
     - `config.py`: SQLMesh configuration
+  - `migration_test/`: Framework for validating data consistency between systems
   - `utils/`: Shared utility functions
 - `tests/`: Unit tests for loader and utility functions
 
@@ -47,14 +80,52 @@ I have skipped the steps regarding converting the CDC logs to tables representin
 ### Testing & Validation
 - `make test`: Run all unit tests with coverage report and verbose logging
 - `make mypy`: Run static type checking
+- `make migration-test`: Run data validation between source and target systems
 
 ### Data Pipeline
-- `make dlt`: Load sample football transfer data into DuckDB
+- `make load-source-data`: Load sample football transfer data into DuckDB
+- `make run-legacy`: Run legacy transformations and copy results to the target database
 - `make sqlmesh-plan`: Execute SQLMesh transformations (only applies changes if models or data have changed)
 - `make sqlmesh-run`: Run models based on their configured schedules
 - `make sqlmesh-restate`: Force rerun of specific model transformations regardless of changes
 - `make sqlmesh-test`: Run SQLMesh model unit tests
 - `make sqlmesh-audit`: Run data quality audits / checks
+
+## Legacy Code
+
+The `src/legacy/` directory contains the existing transformation code that currently runs on the production SQL Server database. This code is included to demonstrate the migration process from legacy implementations to modern, declarative transformations using SQLMesh.
+
+Key components:
+- `derived_a.py`, `derived_b.py`, `derived_c.py`: Individual transformation implementations
+- `run_all.py`: Orchestration script that:
+  1. Runs all legacy transformations to create derived tables in the legacy database
+  2. Copies the derived tables from the legacy database to the target database (raw schema)
+
+This approach allows us to:
+1. Maintain the existing transformation logic during migration
+2. Create a baseline for comparison with the new implementations
+3. Gradually migrate transformations while ensuring consistency
+
+## Migration Testing Framework
+
+The migration testing framework (`src/migration_test/`) provides tools to validate data consistency between the source and target systems:
+
+1. **Table Comparison**: Compares tables between systems using primary keys
+2. **Tolerance Settings**: Configurable tolerance for numeric differences and row count discrepancies
+3. **Detailed Reporting**: Generates reports showing which columns and rows have differences
+4. **Sampling**: Provides sample rows with differences to aid in debugging
+
+This framework is critical for ensuring the migration doesn't introduce data inconsistencies or analytical differences.
+
+## SQLMesh for Transformation Management
+
+SQLMesh provides several key benefits for managing transformations during and after migration:
+
+1. **Version Control**: All transformations are version-controlled SQL files
+2. **Testing**: Built-in testing framework for validating transformations
+3. **Dependency Management**: Automatically manages dependencies between models
+4. **Incremental Processing**: Supports incremental model updates (though this demo uses full refreshes for simplicity)
+5. **Scheduling**: Cron-based scheduling for model refreshes
 
 ### SQLMesh Execution Model
 
@@ -63,38 +134,24 @@ SQLMesh uses an intelligent execution model to determine when to run transformat
 1. **Plan vs Run**:
    - `sqlmesh plan` is used for deploying changes to models and synchronizing environments
    - `sqlmesh run` is used for scheduled execution of models based on their cron parameters
-   - Use `plan` during development and deployment
-   - Use `run` for production scheduled execution
 
 2. **Plan Behavior**:
    - `sqlmesh plan` only applies changes when:
      - Model definitions have changed
      - New data is available
      - Models haven't been run for their scheduled interval
-   - Running `plan` multiple times without changes will not trigger re-execution
 
 3. **Run Behavior**:
    - `sqlmesh run` checks each model's cron schedule
    - Only executes models whose scheduled interval has elapsed since last run
-   - Does not re-execute models that have run within their interval
-   - Typically executed on a schedule (e.g., via crontab) at least as frequently as your shortest model interval
-   - Example: If models run every 5 minutes, schedule `sqlmesh run` every 5 minutes
 
 4. **Cron Scheduling**:
    - Models use `cron '*/5 * * * *'` configuration (runs every 5 minutes)
    - SQLMesh tracks the last successful run time
-   - A model will only run if:
-     - It hasn't been run in the last 5 minutes, OR
-     - You explicitly force a rerun with `sqlmesh-restate`
-   - The schedule is based on exact intervals, not calendar days
-   - Forward-only runs don't mark the interval as complete
 
 5. **Restate Command**:
    - Use `make sqlmesh-restate` to force model re-execution
-   - Useful for:
-     - Testing changes during development
-     - Fixing data quality issues
-     - Backfilling historical data
+   - Useful for testing changes or fixing data quality issues
 
 ## Data Quality & Validation
 
@@ -114,9 +171,7 @@ SQLMesh models include:
 
 ## Implementation Notes
 
-For simplicity, the SQLMesh models are implemented using full refreshes rather than incremental processing. Converting to incremental processing would involve adding timestamp/version columns to source data, which doesnt make sense in this example.
-
-This would definitely be done if this was a larger dataset in a real project with more frequent updates.
+For simplicity, the SQLMesh models are implemented using full refreshes rather than incremental processing. In a production environment with larger datasets, incremental processing would be implemented by adding timestamp/version columns to source data.
 
 ## Testing Approach
 
@@ -125,5 +180,6 @@ The project demonstrates comprehensive testing at multiple levels:
 - Data validation during ingestion using Patito
 - Model tests using SQLMesh's testing framework
 - Data quality audits for transformed data
+- Migration tests comparing source and target systems
 
-This ensures data quality and transformation accuracy throughout the pipeline.
+This multi-layered testing approach ensures data quality and transformation accuracy throughout the migration process.

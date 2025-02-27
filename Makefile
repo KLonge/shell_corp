@@ -65,10 +65,16 @@ mypy:
 	$(PYTHON_CMD) -m mypy src/
 
 # Data pipeline commands
-dlt:
+load-source-data:
 	$(PYTHON_CMD) src/loader/main.py
 	@echo "\nVerifying data in DuckDB:"
 	@$(PYTHON_CMD) -c "import duckdb; conn = duckdb.connect('database/shell_corp.duckdb'); print(conn.sql('SELECT * FROM raw.transfer_listings').df())"
+
+run-legacy:
+	$(PYTHON_CMD) src/legacy/run_all.py
+
+migration-test:
+	$(PYTHON_CMD) src/migration_test/main.py
 
 display-a:
 	@echo "\nShowing derived table A results:"
@@ -103,4 +109,4 @@ sqlmesh-run:
 	cd src/sqlmesh && $(SQLMESH_CMD) run
 	$(DISPLAY_RESULTS)
 
-.PHONY: init init-python install-python check-uv install-python-deps upgrade-python-deps clean test mypy dlt sqlmesh-plan sqlmesh-restate sqlmesh-test sqlmesh-audit sqlmesh-run display-a display-b display-c
+.PHONY: init init-python install-python check-uv install-python-deps upgrade-python-deps clean test mypy load-source-data run-legacy migration-test sqlmesh-plan sqlmesh-restate sqlmesh-test sqlmesh-audit sqlmesh-run display-a display-b display-c
