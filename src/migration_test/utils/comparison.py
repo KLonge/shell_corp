@@ -365,6 +365,17 @@ def _build_sample_failed_rows_query(
 
     select_clause = ", ".join(select_columns)
 
+    # Create paired column selections for the final output
+    paired_columns = []
+    for col in valid_columns:
+        # Only show values when they're different, otherwise null
+        paired_columns.append(
+            f"CASE WHEN t1_{col} = t2_{col} OR (t1_{col} IS NULL AND t2_{col} IS NULL) THEN NULL ELSE t1_{col} END AS {col}_1"
+        )
+        paired_columns.append(
+            f"CASE WHEN t1_{col} = t2_{col} OR (t1_{col} IS NULL AND t2_{col} IS NULL) THEN NULL ELSE t2_{col} END AS {col}_2"
+        )
+
     return f"""
     WITH base_keys AS (
         SELECT {select_clause}
@@ -381,8 +392,7 @@ def _build_sample_failed_rows_query(
     )
     SELECT 
         {", ".join([f"{pk}" for pk in primary_key])},
-        {", ".join([f"t1_{col} AS {col}_source" for col in valid_columns])},
-        {", ".join([f"t2_{col} AS {col}_target" for col in valid_columns])},
+        {", ".join(paired_columns)},
         {", ".join([f"NOT {col}_passed AS {col}_failed" for col in valid_columns])},
         row_passed
     FROM test_data
@@ -416,15 +426,15 @@ def _process_sample_failed_rows(
 
         print("Failed columns:")
         for col in row["failed_columns"]:
-            source_val = row.get(f"{col}_source")
-            target_val = row.get(f"{col}_target")
+            source_val = row.get(f"{col}_1")
+            target_val = row.get(f"{col}_2")
             print(f"  - {col}: {source_val} vs {target_val}")
 
         # Add a dictionary of value differences for failed columns
         row["value_differences"] = {}
         for col in row["failed_columns"]:
-            source_val = row.get(f"{col}_source")
-            target_val = row.get(f"{col}_target")
+            source_val = row.get(f"{col}_1")
+            target_val = row.get(f"{col}_2")
 
             # Add additional information for numeric differences
             diff_info = {}
