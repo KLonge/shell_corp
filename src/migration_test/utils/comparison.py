@@ -438,8 +438,8 @@ def _process_sample_failed_rows(
 
             # Add additional information for numeric differences
             diff_info = {}
-            if isinstance(source_val, (int, float)) and isinstance(
-                target_val, (int, float)
+            if isinstance(source_val, int | float) and isinstance(
+                target_val, int | float
             ):
                 diff_info["diff"] = target_val - source_val
                 diff_info["diff_pct"] = (
