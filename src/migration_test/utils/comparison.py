@@ -73,7 +73,7 @@ def _build_column_comparisons(
 
         elif any(
             num_type in data_type
-            for num_type in ["number", "decimal", "numeric", "float", "int"]
+            for num_type in ["number", "decimal", "numeric", "float", "int", "double"]
         ):
             column_comparisons[col] = f"""
                 ABS(COALESCE(t1_{col}, 0) - COALESCE(t2_{col}, 0)) <= 
