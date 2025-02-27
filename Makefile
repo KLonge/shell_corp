@@ -73,6 +73,7 @@ load-source-data:
 run-legacy:
 	$(PYTHON_CMD) src/legacy/run_all.py
 
+# Migration testing commands
 migration-test:
 	$(PYTHON_CMD) src/migration_test/main.py
 
@@ -109,4 +110,4 @@ sqlmesh-run:
 	cd src/sqlmesh && $(SQLMESH_CMD) run
 	$(DISPLAY_RESULTS)
 
-.PHONY: init init-python install-python check-uv install-python-deps upgrade-python-deps clean test mypy load-source-data run-legacy migration-test sqlmesh-plan sqlmesh-restate sqlmesh-test sqlmesh-audit sqlmesh-run display-a display-b display-c
+.PHONY: init init-python install-python check-uv install-python-deps upgrade-python-deps clean test mypy load-source-data run-legacy migration-test test-migration-framework sqlmesh-plan sqlmesh-restate sqlmesh-test sqlmesh-audit sqlmesh-run display-a display-b display-c

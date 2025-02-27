@@ -48,7 +48,7 @@ The complete workflow for this demonstration is:
 3. Run `make load-source-data` to load sample data into both the legacy DuckDB database and the new DuckDB database
 4. Run `make run-legacy` to execute legacy transformations and copy results to the legacy DuckDB database and the new DuckDB database
 5. Run `make sqlmesh-plan` to execute SQLMesh transformations on the new DuckDB database
-6. Run `make migration-test` to validate the results between the legacy and new DuckDB databases by comparing the 'raw' schema (legacy / copy of app database) with the 'prod' schema (new / databricks database made with SQLMesh)
+6. Run `make migration-test` to validate the results between the legacy and new DuckDB databases
 
 **NOTE:** If you encounter issues with the `make init` command, you may need to adjust it for your operating system. The Makefile includes Windows and Mac-specific paths.
 
@@ -69,6 +69,9 @@ The complete workflow for this demonstration is:
   - `migration_test/`: Framework for validating data consistency between systems
   - `utils/`: Shared utility functions
 - `tests/`: Unit tests for loader and utility functions
+  - `migration_test/`: Tests for the migration testing framework itself
+    - `utils/`: Utility functions for the migration testing framework
+      - `test_compare_duckdb_tables.py`: Tests for the migration testing framework itself
 
 ## Available Commands
 
@@ -108,14 +111,23 @@ This approach allows us to:
 
 ## Migration Testing Framework
 
-The migration testing framework (`src/migration_test/`) provides tools to validate data consistency between the source and target systems:
+The migration testing framework provides tools to validate data consistency between the source and target systems:
 
 1. **Table Comparison**: Compares tables between systems using primary keys
 2. **Tolerance Settings**: Configurable tolerance for numeric differences and row count discrepancies
 3. **Detailed Reporting**: Generates reports showing which columns and rows have differences
 4. **Sampling**: Provides sample rows with differences to aid in debugging
 
-This framework is critical for ensuring the migration doesn't introduce data inconsistencies or analytical differences.
+### Migration Testing Approach
+
+The repository offers a script-based approach to migration testing:
+
+#### Script-Based Testing (`make migration-test`)
+- Simple script that runs comparisons and outputs results
+- Generates CSV reports in the `migration_test_results` directory
+- Provides basic pass/fail information
+- Detailed error output for all failed tables
+- Useful for validating the entire migration process
 
 ## SQLMesh for Transformation Management
 
@@ -181,5 +193,6 @@ The project demonstrates comprehensive testing at multiple levels:
 - Model tests using SQLMesh's testing framework
 - Data quality audits for transformed data
 - Migration tests comparing source and target systems
+- Framework tests ensuring the migration testing framework itself is reliable
 
 This multi-layered testing approach ensures data quality and transformation accuracy throughout the migration process.
